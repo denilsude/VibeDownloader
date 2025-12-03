@@ -1,0 +1,51 @@
+name: Deploy VibeDownloader
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Instalar Dependências e Configurar Serviço
+      run: |
+        # Definições de Diretório
+        PROJECT_DIR="/root/VibeDownloader"
+        VENV_DIR="$PROJECT_DIR/venv"
+        SERVICE_FILE="/etc/systemd/system/vibe.service"
+
+        # 1. Atualizar Código
+        if [ ! -d "$PROJECT_DIR" ]; then 
+          sudo git clone https://github.com/denilsude/VibeDownloader.git "$PROJECT_DIR"
+        fi
+        
+        cd "$PROJECT_DIR"
+        sudo git fetch origin
+        sudo git reset --hard origin/main
+
+        # 2. Configurar Python e Dependências (Gunicorn entra aqui)
+        if [ ! -d "$VENV_DIR" ]; then 
+          sudo python3 -m venv "$VENV_DIR"
+        fi
+        
+        sudo "$VENV_DIR/bin/pip" install --upgrade pip
+        sudo "$VENV_DIR/bin/pip" install -r requirements.txt
+
+        # 3. Atualizar e Registrar o Serviço Systemd
+        # Copiamos o arquivo do repositório para o sistema para garantir que esteja sempre atualizado
+        # ATENÇÃO: Certifique-se de que o arquivo vibe.service existe na raiz do seu repo
+        if [ -f "vibe.service" ]; then
+            sudo cp vibe.service "$SERVICE_FILE"
+            sudo systemctl daemon-reload
+        fi
+
+        # 4. Reiniciar Aplicação
+        sudo systemctl enable vibe
+        sudo systemctl restart vibe
+        
+        # Verificação rápida
+        sudo systemctl status vibe --no-pager
