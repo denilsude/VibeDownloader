@@ -5,128 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VibeDownloader Pro</title>
 <style>
-    /* Estilos Cyberpunk/Dark */
-    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
-    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
-    
-    .downloader-box { 
-        background-color: #1e1e1e; padding: 40px; border-radius: 15px; 
-        box-shadow: 0 0 20px rgba(0, 255, 127, 0.2); text-align: center; 
-        width: 100%; max-width: 600px; 
+    /* Reset e Base Dark Theme */
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #0d0d0d; color: #e0e0e0; min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 40px; }
+    .title { font-size: 3em; font-weight: 800; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.3); margin: 0; }
+    .subtitle { color: #666; font-size: 1.1em; margin-top: 10px; }
+
+    /* Card Principal */
+    .card { background-color: #1a1a1a; border-radius: 20px; padding: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+    /* Inputs Dinâmicos */
+    .input-wrapper { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+    .url-input { 
+        flex: 1; padding: 15px 20px; border: 2px solid #333; border-radius: 12px; 
+        background-color: #262626; color: #fff; outline: none; transition: 0.3s; font-size: 1em; 
     }
+    .url-input:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0, 255, 136, 0.1); }
     
-    .title { font-size: 2.5em; font-weight: bold; color: #00ff7f; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 255, 127, 0.5); }
-    .subtitle { color: #888; margin-bottom: 25px; font-size: 0.9em; }
-
-    /* Inputs e Selects */
-    .control-group { margin-bottom: 20px; text-align: left; }
-    label { display: block; margin-bottom: 8px; font-weight: bold; color: #00ff7f; }
-    
-    textarea { 
-        width: 100%; height: 100px; padding: 15px; border: 2px solid #333; 
-        border-radius: 10px; background-color: #2a2a2a; color: #fff; 
-        outline: none; resize: vertical; font-family: monospace; box-sizing: border-box;
+    /* Botões de Ação (+ e -) */
+    .btn-icon {
+        width: 50px; height: 50px; border: none; border-radius: 12px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: 1.5em; transition: 0.2s;
     }
-    textarea:focus, select:focus { border-color: #00ff7f; }
+    .btn-add { background-color: #333; color: #00ff88; }
+    .btn-add:hover { background-color: #444; transform: scale(1.05); }
+    .btn-remove { background-color: #331a1a; color: #ff4444; }
+    .btn-remove:hover { background-color: #442222; }
 
-    select {
-        width: 100%; padding: 12px; border: 2px solid #333; border-radius: 10px;
-        background-color: #2a2a2a; color: #fff; outline: none; cursor: pointer;
+    /* Seletor de Formato */
+    .format-group { margin: 30px 0; text-align: center; }
+    .format-select { 
+        padding: 10px 20px; border-radius: 30px; background: #262626; color: #fff; 
+        border: 2px solid #333; cursor: pointer; font-size: 1em; font-weight: bold;
     }
 
-    /* Botões */
-    .btn { 
-        width: 100%; padding: 15px; border: none; border-radius: 25px; 
-        font-weight: bold; cursor: pointer; transition: transform 0.2s; 
-        font-size: 1.1em; display: flex; justify-content: center; align-items: center; gap: 10px;
+    /* Botão Principal */
+    .btn-convert { 
+        width: 100%; padding: 18px; border: none; border-radius: 15px; 
+        background: linear-gradient(45deg, #00ff88, #00b8ff); color: #000; 
+        font-weight: 900; font-size: 1.2em; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        transition: 0.3s;
     }
-    .btn-primary { background-color: #00ff7f; color: #121212; }
-    .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 255, 127, 0.6); }
-    
-    .btn-download { background-color: #00bfff; color: #121212; margin-top: 20px; text-decoration: none; }
-    .btn-download:hover { box-shadow: 0 0 15px rgba(0, 191, 255, 0.6); }
+    .btn-convert:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
 
-    /* Loading Spinner */
-    .loader { display: none; border: 4px solid #333; border-top: 4px solid #00ff7f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* Loading */
+    .loader-container { display: none; text-align: center; margin: 30px 0; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #00ff88; border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .hidden { display: none; }
+    /* Resultados (Spek Panel) */
+    .result-item { background: #222; margin-bottom: 30px; border-radius: 15px; overflow: hidden; border: 1px solid #333; }
+    .result-header { padding: 15px 20px; background: #2a2a2a; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+    .song-title { font-weight: bold; color: #fff; }
+    .file-info { color: #888; font-size: 0.9em; }
+    .spek-img { width: 100%; display: block; height: auto; max-height: 250px; object-fit: cover; }
     
-    /* Mensagens */
-    .flash { padding: 10px; border-radius: 5px; margin-bottom: 15px; background: rgba(220, 53, 69, 0.2); color: #ff6b6b; border: 1px solid #dc3545; }
+    .final-download { text-align: center; margin-top: 40px; }
+    .btn-zip { background-color: #00b8ff; color: #000; padding: 15px 40px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; font-size: 1.1em; }
 </style>
 <script>
-    function startProcessing() {
-        document.getElementById('process-btn').style.display = 'none';
+    function addInput() {
+        const container = document.getElementById('inputs-container');
+        const div = document.createElement('div');
+        div.className = 'input-wrapper';
+        div.innerHTML = `
+            <input type="text" name="urls[]" class="url-input" placeholder="Cole outro link do YouTube...">
+            <button type="button" class="btn-icon btn-remove" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function startProcess() {
+        document.getElementById('form-content').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('status-text').innerText = "Processando Áudio (Alta Fidelidade)...";
     }
 </script>
 </head>
 <body>
 
 <div class="container">
-    <div class="downloader-box">
+    <div class="header">
         <h1 class="title">VibeDownloader</h1>
-        <p class="subtitle">Ferramenta para DJs • Sem Compressão Destrutiva</p>
+        <p class="subtitle">Multi-Converter & Spectrum Analysis</p>
+    </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444; color: #ff8888; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-        {% if not download_ready %}
-        <form action="/" method="post" onsubmit="startProcessing()">
-            
-            <div class="control-group">
-                <label>Cole os links (Um por linha, máx 10):</label>
-                <textarea name="urls" placeholder="https://youtube.com/watch?v=..." required></textarea>
+    {% if not results %}
+    <div class="card">
+        <form action="/" method="post" onsubmit="startProcess()">
+            <div id="form-content">
+                <div id="inputs-container">
+                    <div class="input-wrapper">
+                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link do YouTube..." required>
+                        <button type="button" class="btn-icon btn-add" onclick="addInput()">+</button>
+                    </div>
+                </div>
+
+                <div class="format-group">
+                    <label style="color: #888; margin-right: 10px;">Formato de Saída:</label>
+                    <select name="format" class="format-select">
+                        <option value="mp3">MP3 (320kbps)</option>
+                        <option value="wav" selected>WAV (Lossless)</option>
+                        <option value="flac">FLAC (Lossless)</option>
+                        <option value="aiff">AIFF (CDJ)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-convert">PROCESSAR LISTA</button>
             </div>
 
-            <div class="control-group">
-                <label>Formato de Saída (DJs):</label>
-                <select name="format">
-                    <option value="mp3">MP3 (320kbps) - Universal</option>
-                    <option value="wav">WAV (Lossless) - Padrão da Indústria</option>
-                    <option value="flac">FLAC (Lossless) - Compacto</option>
-                    <option value="aiff">AIFF (Lossless) - Metadados + CDJs</option>
-                </select>
+            <div id="loader" class="loader-container">
+                <div class="spinner"></div>
+                <h3 style="color: #00ff88;">Processando Áudio...</h3>
+                <p style="color: #666;">Baixando, convertendo e gerando espectrogramas.</p>
             </div>
-
-            <button type="submit" id="process-btn" class="btn btn-primary">
-                CONVERTER AGORA
-            </button>
-            
-            <div id="loader" class="loader"></div>
-            <p id="status-text" style="color: #666; margin-top: 10px;"></p>
         </form>
-        {% endif %}
+    </div>
+    {% endif %}
 
-        {% if download_ready %}
-            <div style="margin-top: 20px;">
-                <h3 style="color: #00ff7f;">Conversão Concluída!</h3>
-                <p style="color: #ccc;">{{ file_name }}</p>
-                
-                {% if spectrogram %}
-                    <img src="{{ url_for('static', filename=spectrogram) }}" style="width: 100%; border-radius: 10px; border: 2px solid #333; margin: 15px 0;">
-                    <p style="font-size: 0.8em; color: #888;">Análise de Espectro (Vibe Check)</p>
-                {% endif %}
-
-                <a href="{{ url_for('download_file', filename=file_name) }}" class="btn btn-download">
-                    BAIXAR ARQUIVO(S)
-                </a>
-                
-                <a href="/" style="display: block; margin-top: 20px; color: #888; text-decoration: none;">← Converter Outros</a>
+    {% if results %}
+    <div>
+        <h2 style="color: #fff; margin-bottom: 20px;">Controle de Qualidade (Spek)</h2>
+        
+        {% for item in results %}
+        <div class="result-item">
+            <div class="result-header">
+                <span class="song-title">{{ item.title }}</span>
+                <span class="file-info">{{ item.format.upper() }}</span>
             </div>
-        {% endif %}
+            <img src="{{ url_for('static', filename=item.spectrogram) }}" class="spek-img" alt="Espectrograma">
+        </div>
+        {% endfor %}
 
-        <div style="color: #555; font-size: 0.8em; margin-top: 30px;">
-            SERVIDOR PRIVADO • UBUNTU 24 • FFmpeg Core
+        <div class="final-download">
+            <a href="{{ url_for('download_zip', filename=zip_name) }}" class="btn-zip">
+                BAIXAR PACOTE COMPLETO (.ZIP)
+            </a>
+            <br><br>
+            <a href="/" style="color: #666; text-decoration: none;">← Voltar ao Início</a>
         </div>
     </div>
+    {% endif %}
+
 </div>
 
 </body>
