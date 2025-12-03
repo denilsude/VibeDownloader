@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeDownloader</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fa-brands fa-spotify logo-icon"></i>
+            <h1>Vibe<span class="highlight">Downloader</span></h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="formDownload">
+            <div class="input-box">
+                <input type="text" name="url" placeholder="Cole o link do YouTube..." required>
+                <button type="submit" id="btnSubmit">
+                    <i class="fa-solid fa-download"></i> BAIXAR
+                </button>
+            </div>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Extraindo áudio de alta qualidade...</p>
+        </div>
+
+        <div class="footer">
+            <p>Servidor Privado • Ubuntu 24</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('formDownload');
+        const loading = document.getElementById('loading');
+        const btn = document.getElementById('btnSubmit');
+
+        form.onsubmit = function() {
+            loading.style.display = 'block';
+            btn.disabled = true;
+            btn.innerHTML = 'Processando...';
+            btn.style.opacity = '0.5';
+        };
+    </script>
+</body>
+</html>
