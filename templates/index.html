@@ -12,90 +12,40 @@
 <meta name="theme-color" content="#121212">
 
 <style>
-    /* --- ESTILOS GERAIS --- */
+    /* Estilos inalterados (Cyberpunk Clean) */
     body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
     .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 15px; }
-    
-    .downloader-box { 
-        background-color: #1e1e1e; padding: 30px; border-radius: 20px; 
-        box-shadow: 0 0 30px rgba(0, 255, 127, 0.15); text-align: center; 
-        width: 100%; max-width: 500px; position: relative; z-index: 1;
-    }
-
+    .downloader-box { background-color: #1e1e1e; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 255, 127, 0.15); text-align: center; width: 100%; max-width: 500px; position: relative; z-index: 1; }
     .title { font-size: 2.2em; font-weight: 800; color: #00ff7f; margin: 10px 0 25px 0; text-shadow: 0 0 15px rgba(0, 255, 127, 0.4); letter-spacing: -1px; }
 
-    /* --- INPUTS --- */
     .input-wrapper { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-    .url-input { 
-        flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; 
-        background-color: #262626; color: #fff; outline: none; transition: 0.3s; 
-        font-size: 16px; /* Evita zoom no iPhone */
-    }
+    .url-input { flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; background-color: #262626; color: #fff; outline: none; transition: 0.3s; font-size: 16px; }
     .url-input:focus { border-color: #00ff7f; background-color: #1a1a1a; }
     
     .btn-icon { width: 45px; height: 45px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s; }
     .btn-add { background-color: #2a2a2a; color: #00ff7f; border: 1px solid #333; }
     .btn-remove { background-color: #2a1a1a; color: #ff5555; border: 1px solid #331a1a; }
 
-    /* --- SELETOR --- */
     .format-selector { margin: 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
     .format-option { cursor: pointer; position: relative; }
     .format-option input { display: none; }
-    .format-option span { 
-        padding: 10px 25px; border: 2px solid #333; border-radius: 30px; 
-        color: #888; transition: all 0.3s ease; display: inline-block; 
-        font-weight: 700; font-size: 0.9em; background: #262626;
-    }
-    .format-option input:checked + span { 
-        border-color: #00ff7f; color: #000; background-color: #00ff7f; 
-        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05);
-    }
+    .format-option span { padding: 10px 25px; border: 2px solid #333; border-radius: 30px; color: #888; transition: all 0.3s ease; display: inline-block; font-weight: 700; font-size: 0.9em; background: #262626; }
+    .format-option input:checked + span { border-color: #00ff7f; color: #000; background-color: #00ff7f; box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05); }
 
-    /* --- BOTÕES --- */
-    .btn-action { 
-        width: 100%; padding: 18px; border: none; border-radius: 15px; 
-        font-weight: 800; cursor: pointer; transition: transform 0.2s; 
-        font-size: 1.1em; display: flex; justify-content: center; align-items: center; 
-        gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;
-    }
+    .btn-action { width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; transition: transform 0.2s; font-size: 1.1em; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
     .btn-convert { background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #050505; }
     .btn-download { background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%); color: #050505; }
     .btn-restart { background-color: #262626; color: #fff; border: 1px solid #333; font-size: 0.9em; padding: 15px; }
-    
     .btn-action:active { transform: scale(0.98); }
 
-    /* --- LOADING OVERLAY (A Mágica) --- */
-    #loading-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.92); z-index: 9999;
-        flex-direction: column; justify-content: center; align-items: center;
-        backdrop-filter: blur(5px);
-    }
-    
-    /* Animação do Fone/Onda */
-    .pulse-ring {
-        width: 80px; height: 80px; border-radius: 50%;
-        background: #00ff7f; box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7);
-        animation: pulse-green 2s infinite; margin-bottom: 30px;
-        display: flex; align-items: center; justify-content: center;
-    }
-    
+    #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.92); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: #00ff7f; box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); animation: pulse-green 2s infinite; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
     .pulse-ring svg { width: 40px; fill: #000; }
-
-    @keyframes pulse-green {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); }
-    }
-
+    @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); } }
     .loading-text { font-size: 1.5em; font-weight: bold; color: #fff; margin-bottom: 10px; }
     .loading-subtext { color: #888; font-size: 0.9em; }
 
-    /* --- RESULTADOS --- */
-    .spek-container { 
-        margin-top: 20px; background: #000; padding: 10px; 
-        border-radius: 12px; border: 1px solid #333; overflow: hidden;
-    }
+    .spek-container { margin-top: 20px; background: #000; padding: 10px; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
     .spek-img { width: 100%; border-radius: 8px; display: block; }
     .song-label { color: #fff; font-size: 0.85em; margin-bottom: 8px; text-align: left; font-weight: 600; padding-left: 5px; }
 
@@ -117,29 +67,11 @@
     }
     
     function startLoading() {
-        // Mostra o Overlay
         document.getElementById('loading-overlay').style.display = 'flex';
-        
-        // Frases dinâmicas para entreter o usuário
-        const steps = [
-            "Conectando ao servidor...",
-            "Baixando em Alta Qualidade...",
-            "Extraindo Áudio...",
-            "Processando Espectrograma...",
-            "Compactando Arquivos...",
-            "Quase lá..."
-        ];
-        
+        const steps = ["Conectando ao servidor...", "Baixando em Alta Qualidade...", "Extraindo Áudio...", "Processando Espectrograma...", "Compactando Arquivos...", "Quase lá..."];
         let i = 0;
         const subtext = document.getElementById('loading-subtext');
-        
-        // Muda a frase a cada 3 segundos
-        setInterval(() => {
-            if (i < steps.length) {
-                subtext.innerText = steps[i];
-                i++;
-            }
-        }, 3000);
+        setInterval(() => { if (i < steps.length) { subtext.innerText = steps[i]; i++; } }, 3000);
     }
 </script>
 </head>
@@ -223,10 +155,7 @@
         </div>
         {% endif %}
         
-        <div style="color: #555; font-size: 0.75em; margin-top: 30px; letter-spacing: 1px;">
-            SERVIDOR PRIVADO • PENTECOST
         </div>
-    </div>
 </div>
 
 </body>

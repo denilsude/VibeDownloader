@@ -13,28 +13,47 @@ import numpy as np
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory
 from yt_dlp import YoutubeDL
 
+# Importações do Banco de Dados
+from models import db, User
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+
 app = Flask(__name__)
-app.secret_key = 'vibe_secret_key_fixed'
+app.secret_key = 'vibe_secret_key_commercial'
+
+# Configuração do Banco de Dados (SQLite)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Inicializa extensões
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Cria o banco de dados se não existir
+with app.app_context():
+    db.create_all()
 
 DOWNLOAD_FOLDER = 'downloads'
 STATIC_FOLDER = 'static'
 
-# Garante pastas
 for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
     if not os.path.exists(f): os.makedirs(f)
 
 FFMPEG_PATH = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
 
 def limpar_pastas():
-    """Apaga arquivos das pastas downloads e static automaticamente"""
     try:
         for folder in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
             for filename in os.listdir(folder):
                 if filename == 'images': continue 
                 file_path = os.path.join(folder, filename)
                 if os.path.isfile(file_path): os.unlink(file_path)
-    except Exception as e:
-        print(f"Erro na limpeza automática: {e}")
+    except: pass
 
 def gerar_spek(audio_path, title):
     try:
@@ -63,13 +82,19 @@ def favicon():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        limpar_pastas() # <--- A MÁGICA ACONTECE AQUI (Limpa tudo antes de começar)
+        limpar_pastas()
         
-        urls = request.form.getlist('urls[]')
-        urls = [u for u in urls if u.strip()]
+        # LÓGICA DE FILTRAGEM (Corrige o problema das linhas vazias)
+        raw_urls = request.form.getlist('urls[]')
+        # O comando abaixo (if u.strip()) remove qualquer linha que esteja vazia ou só com espaços
+        urls = [u for u in raw_urls if u.strip()]
+        
         format_type = request.form.get('format', 'mp3')
 
-        if not urls: return redirect(url_for('index'))
+        if not urls: 
+            # Se a pessoa clicou em converter mas não pôs NENHUM link válido
+            flash('Por favor, adicione pelo menos um link válido.', 'error')
+            return redirect(url_for('index'))
 
         files_info = []
         downloaded_paths = []
