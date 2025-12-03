@@ -45,9 +45,12 @@
     .btn-download { background-color: #00bfff; color: #121212; }
     .btn-download:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 191, 255, 0.4); }
 
-    /* Botão Nova Conversão (Estilo Dark) */
+    /* Botão Nova Conversão e Limpar */
     .btn-restart { background-color: #333; color: #fff; border: 1px solid #444; margin-top: 15px; }
     .btn-restart:hover { background-color: #444; border-color: #666; }
+    
+    .btn-clear { background-color: transparent; color: #ff5555; border: 1px solid #ff5555; margin-top: 15px; font-size: 0.9em; }
+    .btn-clear:hover { background-color: #ff5555; color: #fff; }
 
     /* Loading e Outros */
     .loader { display: none; margin: 20px auto; border: 4px solid #333; border-top: 4px solid #00ff7f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
@@ -56,6 +59,7 @@
     .spek-img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
     .song-label { color: #fff; font-size: 0.8em; margin-bottom: 5px; text-align: left; }
     .flash { padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(255,0,0,0.2); color: #ff8888; border: 1px solid red; font-size: 0.9em; }
+    .flash.success { border-color: #00ff7f; color: #00ff7f; background: rgba(0, 255, 127, 0.1); }
 </style>
 <script>
     function addInput() {
@@ -63,7 +67,7 @@
         const div = document.createElement('div');
         div.className = 'input-wrapper';
         div.innerHTML = `
-            <input type="text" name="urls[]" class="url-input" placeholder="Outro link...">
+            <input type="text" name="urls[]" class="url-input" placeholder="Outro link..." autocomplete="off">
             <button type="button" class="btn-icon btn-remove" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(div);
@@ -86,17 +90,17 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="flash">{{ message }}</div>
+              <div class="flash {{ category }}">{{ message }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
 
         {% if not download_ready %}
         <div id="form-area">
-            <form action="/" method="post" onsubmit="startLoading()">
+            <form action="/" method="post" onsubmit="startLoading()" autocomplete="off">
                 <div id="inputs-container">
                     <div class="input-wrapper">
-                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link do YouTube..." required>
+                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link do YouTube..." required autocomplete="off">
                         <button type="button" class="btn-icon btn-add" onclick="addInput()">+</button>
                     </div>
                 </div>
@@ -122,7 +126,7 @@
         
         <div id="loader" class="loader"></div>
         <div id="loading-text" class="loader" style="border:none; width:auto; animation:none; color:#888; display: none;">
-            Processando Áudio...
+            Processando Áudio (FFmpeg Alta Fidelidade)...
         </div>
         {% endif %}
 
@@ -140,15 +144,15 @@
             {% endfor %}
 
             <a href="{{ url_for('download_file', filename=final_filename) }}" class="btn-action btn-download">
-                {% if is_zip %}
-                    BAIXAR PACOTE (.ZIP)
-                {% else %}
-                    BAIXAR ARQUIVO
-                {% endif %}
+                {% if is_zip %} BAIXAR PACOTE (.ZIP) {% else %} BAIXAR ARQUIVO {% endif %}
             </a>
             
             <a href="/" class="btn-action btn-restart">
                 NOVA CONVERSÃO
+            </a>
+
+            <a href="/clear" class="btn-action btn-clear">
+                🗑️ LIMPAR ARQUIVOS DO SERVIDOR
             </a>
         </div>
         {% endif %}
