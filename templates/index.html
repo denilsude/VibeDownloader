@@ -1,57 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeDownloader</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeDownloader</title>
+<style>
+    /* Reset e estilos base */
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
+    
+    /* Container principal */
+    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    
+    /* Caixa do downloader */
+    .downloader-box { background-color: #1e1e1e; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(0, 255, 127, 0.2); text-align: center; width: 100%; max-width: 500px; }
+    
+    /* Título */
+    .title { font-size: 2.5em; font-weight: bold; color: #00ff7f; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 255, 127, 0.5); }
+    
+    /* Seletor de Formato */
+    .format-selector { margin-bottom: 25px; display: flex; justify-content: center; gap: 15px; }
+    .format-option { position: relative; cursor: pointer; font-weight: bold; }
+    .format-option input { display: none; } /* Esconde o radio button padrão */
+    .format-option span { padding: 10px 20px; border: 2px solid #333; border-radius: 25px; color: #888; transition: all 0.3s ease; display: inline-block; }
+    .format-option input:checked + span { border-color: #00ff7f; color: #121212; background-color: #00ff7f; box-shadow: 0 0 15px rgba(0, 255, 127, 0.6); }
+    
+    /* Campo de entrada e botão */
+    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    .url-input { flex: 1; padding: 15px; border: 2px solid #333; border-radius: 25px; background-color: #2a2a2a; color: #fff; outline: none; transition: border-color 0.3s; }
+    .url-input:focus { border-color: #00ff7f; }
+    .download-btn { padding: 15px 30px; border: none; border-radius: 25px; background-color: #00ff7f; color: #121212; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 10px; }
+    .download-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 255, 127, 0.8); }
+    .download-icon { width: 20px; height: 20px; fill: currentColor; }
+    
+    /* Rodapé */
+    .footer { text-align: center; padding: 20px; color: #555; font-size: 0.9em; }
+    
+    /* Mensagem de erro (exemplo, pode ser ocultada via JS) */
+    .error-message { background-color: rgba(220, 53, 69, 0.2); color: #ff6b6b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #dc3545; display: none; /* Oculto por padrão */ }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <i class="fa-brands fa-spotify logo-icon"></i>
-            <h1>Vibe<span class="highlight">Downloader</span></h1>
-        </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+<div class="container">
+    <div class="downloader-box">
+        <h1 class="title">VibeDownloader</h1>
 
-        <form method="POST" id="formDownload">
-            <div class="input-box">
-                <input type="text" name="url" placeholder="Cole o link do YouTube..." required>
-                <button type="submit" id="btnSubmit">
-                    <i class="fa-solid fa-download"></i> BAIXAR
+        <form id="download-form" action="/download" method="post">
+            <div class="format-selector">
+                <label class="format-option">
+                    <input type="radio" name="format" value="mp3" checked>
+                    <span>MP3</span>
+                </label>
+                <label class="format-option">
+                    <input type="radio" name="format" value="wav">
+                    <span>WAV</span>
+                </label>
+            </div>
+
+            <div class="input-group">
+                <input type="text" name="url" class="url-input" placeholder="Cole o link do YouTube..." required>
+                <button type="submit" class="download-btn">
+                    <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    BAIXAR
                 </button>
             </div>
         </form>
 
-        <div id="loading" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            <p>Extraindo áudio de alta qualidade...</p>
-        </div>
-
         <div class="footer">
-            <p>Servidor Privado • Ubuntu 24</p>
+            SERVIDOR PRIVADO • UBUNTU 24
         </div>
     </div>
+</div>
 
-    <script>
-        const form = document.getElementById('formDownload');
-        const loading = document.getElementById('loading');
-        const btn = document.getElementById('btnSubmit');
-
-        form.onsubmit = function() {
-            loading.style.display = 'block';
-            btn.disabled = true;
-            btn.innerHTML = 'Processando...';
-            btn.style.opacity = '0.5';
-        };
-    </script>
 </body>
 </html>
