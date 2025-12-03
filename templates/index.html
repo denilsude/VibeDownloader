@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>VibeDownloader</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
@@ -12,48 +12,101 @@
 <meta name="theme-color" content="#121212">
 
 <style>
-    /* Estilos inalterados */
-    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
-    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
-    .downloader-box { background-color: #1e1e1e; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(0, 255, 127, 0.2); text-align: center; width: 100%; max-width: 550px; }
-    .title { font-size: 2.5em; font-weight: bold; color: #00ff7f; margin-bottom: 25px; text-shadow: 0 0 10px rgba(0, 255, 127, 0.5); }
+    /* --- ESTILOS GERAIS --- */
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
+    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 15px; }
     
-    .input-wrapper { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-    .url-input { flex: 1; padding: 12px; border: 2px solid #333; border-radius: 25px; background-color: #2a2a2a; color: #fff; outline: none; transition: border-color 0.3s; font-size: 0.95em; }
-    .url-input:focus { border-color: #00ff7f; }
-    
-    .btn-icon { width: 42px; height: 42px; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s; }
-    .btn-add { background-color: #333; color: #00ff7f; border: 1px solid #00ff7f; }
-    .btn-add:hover { background-color: #00ff7f; color: #000; transform: scale(1.1); }
-    .btn-remove { background-color: #2a2a2a; color: #ff5555; border: 1px solid #ff5555; }
-    .btn-remove:hover { background-color: #ff5555; color: #fff; }
+    .downloader-box { 
+        background-color: #1e1e1e; padding: 30px; border-radius: 20px; 
+        box-shadow: 0 0 30px rgba(0, 255, 127, 0.15); text-align: center; 
+        width: 100%; max-width: 500px; position: relative; z-index: 1;
+    }
 
-    .format-selector { margin: 20px 0; display: flex; justify-content: center; gap: 15px; }
-    .format-option { cursor: pointer; }
+    .title { font-size: 2.2em; font-weight: 800; color: #00ff7f; margin: 10px 0 25px 0; text-shadow: 0 0 15px rgba(0, 255, 127, 0.4); letter-spacing: -1px; }
+
+    /* --- INPUTS --- */
+    .input-wrapper { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    .url-input { 
+        flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; 
+        background-color: #262626; color: #fff; outline: none; transition: 0.3s; 
+        font-size: 16px; /* Evita zoom no iPhone */
+    }
+    .url-input:focus { border-color: #00ff7f; background-color: #1a1a1a; }
+    
+    .btn-icon { width: 45px; height: 45px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s; }
+    .btn-add { background-color: #2a2a2a; color: #00ff7f; border: 1px solid #333; }
+    .btn-remove { background-color: #2a1a1a; color: #ff5555; border: 1px solid #331a1a; }
+
+    /* --- SELETOR --- */
+    .format-selector { margin: 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .format-option { cursor: pointer; position: relative; }
     .format-option input { display: none; }
-    .format-option span { padding: 8px 20px; border: 2px solid #333; border-radius: 20px; color: #888; transition: all 0.3s ease; display: inline-block; font-weight: bold; font-size: 0.9em; }
-    .format-option input:checked + span { border-color: #00ff7f; color: #121212; background-color: #00ff7f; box-shadow: 0 0 10px rgba(0, 255, 127, 0.5); }
+    .format-option span { 
+        padding: 10px 25px; border: 2px solid #333; border-radius: 30px; 
+        color: #888; transition: all 0.3s ease; display: inline-block; 
+        font-weight: 700; font-size: 0.9em; background: #262626;
+    }
+    .format-option input:checked + span { 
+        border-color: #00ff7f; color: #000; background-color: #00ff7f; 
+        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05);
+    }
 
-    .btn-action { width: 100%; padding: 15px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; transition: transform 0.2s; font-size: 1.1em; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; text-decoration: none; }
-    .btn-convert { background-color: #00ff7f; color: #121212; }
-    .btn-convert:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
+    /* --- BOTÕES --- */
+    .btn-action { 
+        width: 100%; padding: 18px; border: none; border-radius: 15px; 
+        font-weight: 800; cursor: pointer; transition: transform 0.2s; 
+        font-size: 1.1em; display: flex; justify-content: center; align-items: center; 
+        gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .btn-convert { background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #050505; }
+    .btn-download { background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%); color: #050505; }
+    .btn-restart { background-color: #262626; color: #fff; border: 1px solid #333; font-size: 0.9em; padding: 15px; }
     
-    .btn-download { background-color: #00bfff; color: #121212; }
-    .btn-download:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 191, 255, 0.4); }
+    .btn-action:active { transform: scale(0.98); }
 
-    .btn-restart { background-color: #333; color: #fff; border: 1px solid #444; margin-top: 15px; }
-    .btn-restart:hover { background-color: #444; border-color: #666; }
+    /* --- LOADING OVERLAY (A Mágica) --- */
+    #loading-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.92); z-index: 9999;
+        flex-direction: column; justify-content: center; align-items: center;
+        backdrop-filter: blur(5px);
+    }
+    
+    /* Animação do Fone/Onda */
+    .pulse-ring {
+        width: 80px; height: 80px; border-radius: 50%;
+        background: #00ff7f; box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7);
+        animation: pulse-green 2s infinite; margin-bottom: 30px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    
+    .pulse-ring svg { width: 40px; fill: #000; }
 
-    .loader { display: none; margin: 20px auto; border: 4px solid #333; border-top: 4px solid #00ff7f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .spek-container { margin-top: 20px; background: #000; padding: 10px; border-radius: 10px; border: 1px solid #333; }
-    .spek-img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
-    .song-label { color: #fff; font-size: 0.8em; margin-bottom: 5px; text-align: left; }
-    .flash { padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(255,0,0,0.2); color: #ff8888; border: 1px solid red; font-size: 0.9em; }
+    @keyframes pulse-green {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); }
+    }
+
+    .loading-text { font-size: 1.5em; font-weight: bold; color: #fff; margin-bottom: 10px; }
+    .loading-subtext { color: #888; font-size: 0.9em; }
+
+    /* --- RESULTADOS --- */
+    .spek-container { 
+        margin-top: 20px; background: #000; padding: 10px; 
+        border-radius: 12px; border: 1px solid #333; overflow: hidden;
+    }
+    .spek-img { width: 100%; border-radius: 8px; display: block; }
+    .song-label { color: #fff; font-size: 0.85em; margin-bottom: 8px; text-align: left; font-weight: 600; padding-left: 5px; }
+
+    .flash { padding: 15px; margin-bottom: 20px; border-radius: 10px; background: rgba(255,50,50,0.1); color: #ff8888; border: 1px solid #ff4444; font-size: 0.9em; }
 </style>
+
 <script>
     function addInput() {
         const container = document.getElementById('inputs-container');
+        if(container.children.length >= 10) { alert('Máximo de 10 links por vez!'); return; }
+        
         const div = document.createElement('div');
         div.className = 'input-wrapper';
         div.innerHTML = `
@@ -64,23 +117,51 @@
     }
     
     function startLoading() {
-        document.getElementById('form-area').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('loading-text').style.display = 'block';
+        // Mostra o Overlay
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
+        // Frases dinâmicas para entreter o usuário
+        const steps = [
+            "Conectando ao servidor...",
+            "Baixando em Alta Qualidade...",
+            "Extraindo Áudio...",
+            "Processando Espectrograma...",
+            "Compactando Arquivos...",
+            "Quase lá..."
+        ];
+        
+        let i = 0;
+        const subtext = document.getElementById('loading-subtext');
+        
+        // Muda a frase a cada 3 segundos
+        setInterval(() => {
+            if (i < steps.length) {
+                subtext.innerText = steps[i];
+                i++;
+            }
+        }, 3000);
     }
 </script>
 </head>
 <body>
 
+<div id="loading-overlay">
+    <div class="pulse-ring">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    </div>
+    <div class="loading-text">AGUARDE</div>
+    <div id="loading-subtext" class="loading-subtext">Iniciando processos...</div>
+</div>
+
 <div class="container">
     <div class="downloader-box">
-        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" style="width: 64px; margin-bottom: 10px; border-radius: 10px;">
+        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" style="width: 70px; margin-bottom: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
         <h1 class="title" style="margin-top: 0;">VibeDownloader</h1>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
+              <div class="flash">{{ message }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
@@ -90,7 +171,7 @@
             <form action="/" method="post" onsubmit="startLoading()" autocomplete="off">
                 <div id="inputs-container">
                     <div class="input-wrapper">
-                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link do YouTube..." required autocomplete="off">
+                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link (YouTube, SoundCloud...)" required autocomplete="off">
                         <button type="button" class="btn-icon btn-add" onclick="addInput()">+</button>
                     </div>
                 </div>
@@ -98,7 +179,7 @@
                 <div class="format-selector">
                     <label class="format-option">
                         <input type="radio" name="format" value="mp3" checked>
-                        <span>MP3</span>
+                        <span>MP3 320</span>
                     </label>
                     <label class="format-option">
                         <input type="radio" name="format" value="wav">
@@ -108,21 +189,20 @@
                         <input type="radio" name="format" value="flac">
                         <span>FLAC</span>
                     </label>
+                    <label class="format-option">
+                        <input type="radio" name="format" value="aiff">
+                        <span>AIFF</span>
+                    </label>
                 </div>
 
-                <button type="submit" class="btn-action btn-convert">CONVERTER</button>
+                <button type="submit" class="btn-action btn-convert">BAIXAR AGORA</button>
             </form>
-        </div>
-        
-        <div id="loader" class="loader"></div>
-        <div id="loading-text" class="loader" style="border:none; width:auto; animation:none; color:#888; display: none;">
-            Processando Áudio (FFmpeg Alta Fidelidade)...
         </div>
         {% endif %}
 
         {% if download_ready %}
         <div>
-            <h3 style="color: #00ff7f; margin-bottom: 5px;">Sucesso!</h3>
+            <h3 style="color: #00ff7f; margin-bottom: 5px; font-size: 1.5em;">Sucesso!</h3>
             
             {% for item in results %}
             <div class="spek-container">
@@ -143,8 +223,8 @@
         </div>
         {% endif %}
         
-        <div style="color: #444; font-size: 0.75em; margin-top: 25px;">
-            SERVIDOR PRIVADO • UBUNTU 24
+        <div style="color: #555; font-size: 0.75em; margin-top: 30px; letter-spacing: 1px;">
+            SERVIDOR PRIVADO • PENTECOST
         </div>
     </div>
 </div>
