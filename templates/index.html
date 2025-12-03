@@ -3,68 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VibeDownloader Pro</title>
+<title>VibeDownloader</title>
+
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
+<link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+<meta name="theme-color" content="#121212">
+
 <style>
-    /* Reset e Base Dark Theme */
-    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #0d0d0d; color: #e0e0e0; min-height: 100vh; }
-    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
-
-    /* Header */
-    .header { text-align: center; margin-bottom: 40px; }
-    .title { font-size: 3em; font-weight: 800; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.3); margin: 0; }
-    .subtitle { color: #666; font-size: 1.1em; margin-top: 10px; }
-
-    /* Card Principal */
-    .card { background-color: #1a1a1a; border-radius: 20px; padding: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-
-    /* Inputs Dinâmicos */
-    .input-wrapper { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
-    .url-input { 
-        flex: 1; padding: 15px 20px; border: 2px solid #333; border-radius: 12px; 
-        background-color: #262626; color: #fff; outline: none; transition: 0.3s; font-size: 1em; 
-    }
-    .url-input:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0, 255, 136, 0.1); }
+    /* Reset e Base */
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; height: 100%; display: flex; flex-direction: column; }
     
-    /* Botões de Ação (+ e -) */
-    .btn-icon {
-        width: 50px; height: 50px; border: none; border-radius: 12px; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; font-size: 1.5em; transition: 0.2s;
+    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    
+    /* Caixa Principal */
+    .downloader-box { 
+        background-color: #1e1e1e; padding: 40px; border-radius: 15px; 
+        box-shadow: 0 0 20px rgba(0, 255, 127, 0.2); text-align: center; 
+        width: 100%; max-width: 550px; 
     }
-    .btn-add { background-color: #333; color: #00ff88; }
-    .btn-add:hover { background-color: #444; transform: scale(1.05); }
-    .btn-remove { background-color: #331a1a; color: #ff4444; }
-    .btn-remove:hover { background-color: #442222; }
+    
+    .title { font-size: 2.5em; font-weight: bold; color: #00ff7f; margin-bottom: 25px; text-shadow: 0 0 10px rgba(0, 255, 127, 0.5); }
+    
+    /* Inputs */
+    .input-wrapper { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+    
+    .url-input { 
+        flex: 1; padding: 12px; border: 2px solid #333; border-radius: 25px; 
+        background-color: #2a2a2a; color: #fff; outline: none; transition: border-color 0.3s;
+        font-size: 0.95em;
+    }
+    .url-input:focus { border-color: #00ff7f; }
+    
+    /* Botões Pequenos */
+    .btn-icon {
+        width: 42px; height: 42px; border: none; border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s;
+    }
+    .btn-add { background-color: #333; color: #00ff7f; border: 1px solid #00ff7f; }
+    .btn-add:hover { background-color: #00ff7f; color: #000; transform: scale(1.1); }
+    .btn-remove { background-color: #2a2a2a; color: #ff5555; border: 1px solid #ff5555; }
+    .btn-remove:hover { background-color: #ff5555; color: #fff; }
 
-    /* Seletor de Formato */
-    .format-group { margin: 30px 0; text-align: center; }
-    .format-select { 
-        padding: 10px 20px; border-radius: 30px; background: #262626; color: #fff; 
-        border: 2px solid #333; cursor: pointer; font-size: 1em; font-weight: bold;
+    /* Seletor Formato */
+    .format-selector { margin: 20px 0; display: flex; justify-content: center; gap: 15px; }
+    .format-option { cursor: pointer; }
+    .format-option input { display: none; }
+    .format-option span { 
+        padding: 8px 20px; border: 2px solid #333; border-radius: 20px; 
+        color: #888; transition: all 0.3s ease; display: inline-block; font-weight: bold; font-size: 0.9em;
+    }
+    .format-option input:checked + span { 
+        border-color: #00ff7f; color: #121212; background-color: #00ff7f; 
+        box-shadow: 0 0 10px rgba(0, 255, 127, 0.5); 
     }
 
     /* Botão Principal */
-    .btn-convert { 
-        width: 100%; padding: 18px; border: none; border-radius: 15px; 
-        background: linear-gradient(45deg, #00ff88, #00b8ff); color: #000; 
-        font-weight: 900; font-size: 1.2em; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-        transition: 0.3s;
+    .download-btn { 
+        width: 100%; padding: 15px; border: none; border-radius: 25px; 
+        background-color: #00ff7f; color: #121212; font-weight: bold; cursor: pointer; 
+        transition: transform 0.2s; font-size: 1.1em; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px;
     }
-    .btn-convert:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
+    .download-btn:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
 
-    /* Loading */
-    .loader-container { display: none; text-align: center; margin: 30px 0; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #00ff88; border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 15px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Loading e Resultados */
+    .loader { display: none; margin: 20px auto; border: 4px solid #333; border-top: 4px solid #00ff7f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Resultados (Spek Panel) */
-    .result-item { background: #222; margin-bottom: 30px; border-radius: 15px; overflow: hidden; border: 1px solid #333; }
-    .result-header { padding: 15px 20px; background: #2a2a2a; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-    .song-title { font-weight: bold; color: #fff; }
-    .file-info { color: #888; font-size: 0.9em; }
-    .spek-img { width: 100%; display: block; height: auto; max-height: 250px; object-fit: cover; }
+    .spek-container { margin-top: 20px; background: #000; padding: 10px; border-radius: 10px; border: 1px solid #333; }
+    .spek-img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
+    .song-label { color: #fff; font-size: 0.8em; margin-bottom: 5px; text-align: left; }
     
-    .final-download { text-align: center; margin-top: 40px; }
-    .btn-zip { background-color: #00b8ff; color: #000; padding: 15px 40px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; font-size: 1.1em; }
+    .flash { padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(255,0,0,0.2); color: #ff8888; border: 1px solid red; font-size: 0.9em; }
 </style>
 <script>
     function addInput() {
@@ -72,38 +84,37 @@
         const div = document.createElement('div');
         div.className = 'input-wrapper';
         div.innerHTML = `
-            <input type="text" name="urls[]" class="url-input" placeholder="Cole outro link do YouTube...">
+            <input type="text" name="urls[]" class="url-input" placeholder="Outro link...">
             <button type="button" class="btn-icon btn-remove" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(div);
     }
-
-    function startProcess() {
-        document.getElementById('form-content').style.display = 'none';
+    
+    function startLoading() {
+        document.getElementById('form-area').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
+        document.getElementById('loading-text').style.display = 'block';
     }
 </script>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1 class="title">VibeDownloader</h1>
-        <p class="subtitle">Multi-Converter & Spectrum Analysis</p>
-    </div>
+    <div class="downloader-box">
+        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" style="width: 64px; margin-bottom: 10px; border-radius: 10px;">
+        <h1 class="title" style="margin-top: 0;">VibeDownloader</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div style="background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444; color: #ff8888; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
-    {% if not results %}
-    <div class="card">
-        <form action="/" method="post" onsubmit="startProcess()">
-            <div id="form-content">
+        {% if not download_ready %}
+        <div id="form-area">
+            <form action="/" method="post" onsubmit="startLoading()">
                 <div id="inputs-container">
                     <div class="input-wrapper">
                         <input type="text" name="urls[]" class="url-input" placeholder="Cole o link do YouTube..." required>
@@ -111,52 +122,57 @@
                     </div>
                 </div>
 
-                <div class="format-group">
-                    <label style="color: #888; margin-right: 10px;">Formato de Saída:</label>
-                    <select name="format" class="format-select">
-                        <option value="mp3">MP3 (320kbps)</option>
-                        <option value="wav" selected>WAV (Lossless)</option>
-                        <option value="flac">FLAC (Lossless)</option>
-                        <option value="aiff">AIFF (CDJ)</option>
-                    </select>
+                <div class="format-selector">
+                    <label class="format-option">
+                        <input type="radio" name="format" value="mp3" checked>
+                        <span>MP3</span>
+                    </label>
+                    <label class="format-option">
+                        <input type="radio" name="format" value="wav">
+                        <span>WAV</span>
+                    </label>
+                    <label class="format-option">
+                        <input type="radio" name="format" value="flac">
+                        <span>FLAC</span>
+                    </label>
                 </div>
 
-                <button type="submit" class="btn-convert">PROCESSAR LISTA</button>
-            </div>
-
-            <div id="loader" class="loader-container">
-                <div class="spinner"></div>
-                <h3 style="color: #00ff88;">Processando Áudio...</h3>
-                <p style="color: #666;">Baixando, convertendo e gerando espectrogramas.</p>
-            </div>
-        </form>
-    </div>
-    {% endif %}
-
-    {% if results %}
-    <div>
-        <h2 style="color: #fff; margin-bottom: 20px;">Controle de Qualidade (Spek)</h2>
+                <button type="submit" class="download-btn">CONVERTER</button>
+            </form>
+        </div>
         
-        {% for item in results %}
-        <div class="result-item">
-            <div class="result-header">
-                <span class="song-title">{{ item.title }}</span>
-                <span class="file-info">{{ item.format.upper() }}</span>
-            </div>
-            <img src="{{ url_for('static', filename=item.spectrogram) }}" class="spek-img" alt="Espectrograma">
-        </div>
-        {% endfor %}
+        <div id="loader" class="loader"></div>
+        <div id="loading-text" class="loader" style="border:none; width:auto; animation:none; color:#888; display: none;">Processando...</div>
+        {% endif %}
 
-        <div class="final-download">
-            <a href="{{ url_for('download_zip', filename=zip_name) }}" class="btn-zip">
-                BAIXAR PACOTE COMPLETO (.ZIP)
+        {% if download_ready %}
+        <div>
+            <h3 style="color: #00ff7f; margin-bottom: 5px;">Sucesso!</h3>
+            <p style="color: #ccc; font-size: 0.9em; margin-bottom: 20px;">Download pronto para {{ total_files }} arquivo(s).</p>
+
+            {% for item in results %}
+            <div class="spek-container">
+                <div class="song-label">{{ item.title }}</div>
+                {% if item.spectrogram %}
+                <img src="{{ url_for('static', filename=item.spectrogram) }}" class="spek-img">
+                {% else %}
+                <div style="color: #555; font-size: 0.8em;">(Espectrograma indisponível)</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <a href="{{ url_for('download_file', filename=zip_name) }}" class="download-btn" style="background-color: #00bfff; margin-top: 20px;">
+                BAIXAR TUDO (.ZIP)
             </a>
-            <br><br>
-            <a href="/" style="color: #666; text-decoration: none;">← Voltar ao Início</a>
+            
+            <a href="/" style="display: block; margin-top: 15px; color: #666; text-decoration: none; font-size: 0.9em;">Voltar</a>
+        </div>
+        {% endif %}
+        
+        <div style="color: #444; font-size: 0.75em; margin-top: 25px;">
+            SERVIDOR PRIVADO • UBUNTU 24
         </div>
     </div>
-    {% endif %}
-
 </div>
 
 </body>
