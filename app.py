@@ -19,19 +19,22 @@ app.secret_key = 'vibe_secret_key_fixed'
 DOWNLOAD_FOLDER = 'downloads'
 STATIC_FOLDER = 'static'
 
+# Garante pastas
 for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
     if not os.path.exists(f): os.makedirs(f)
 
 FFMPEG_PATH = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
 
 def limpar_pastas():
+    """Apaga arquivos das pastas downloads e static automaticamente"""
     try:
         for folder in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
             for filename in os.listdir(folder):
                 if filename == 'images': continue 
                 file_path = os.path.join(folder, filename)
                 if os.path.isfile(file_path): os.unlink(file_path)
-    except: pass
+    except Exception as e:
+        print(f"Erro na limpeza automática: {e}")
 
 def gerar_spek(audio_path, title):
     try:
@@ -60,7 +63,8 @@ def favicon():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        limpar_pastas()
+        limpar_pastas() # <--- A MÁGICA ACONTECE AQUI (Limpa tudo antes de começar)
+        
         urls = request.form.getlist('urls[]')
         urls = [u for u in urls if u.strip()]
         format_type = request.form.get('format', 'mp3')
@@ -103,17 +107,14 @@ def index():
                 flash('Erro: Nenhum arquivo foi baixado.', 'error')
                 return redirect(url_for('index'))
 
-            # LÓGICA DE ENTREGA INTELIGENTE
             final_filename = ""
             is_zip = False
 
             if len(downloaded_paths) == 1:
-                # Se for só 1, entrega o arquivo direto
                 final_filename = os.path.basename(downloaded_paths[0])
                 is_zip = False
             else:
-                # Se forem vários, cria ZIP com nome bonito
-                data_hora = datetime.now().strftime("%d-%m-%Hh%M") # Ex: 03-12-02h40
+                data_hora = datetime.now().strftime("%d-%m-%Hh%M")
                 zip_name = f"Vibe_Mix_{data_hora}.zip"
                 zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
                 with zipfile.ZipFile(zip_path, 'w') as zf:
