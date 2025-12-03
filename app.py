@@ -2,7 +2,8 @@ import os
 import shutil
 import zipfile
 import time
-import shutil # Para encontrar o executável ffmpeg
+import shutil
+from datetime import datetime
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -18,20 +19,16 @@ app.secret_key = 'vibe_secret_key_fixed'
 DOWNLOAD_FOLDER = 'downloads'
 STATIC_FOLDER = 'static'
 
-# Garante pastas
 for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
     if not os.path.exists(f): os.makedirs(f)
 
-# DETECTA ONDE ESTÁ O FFMPEG NO SERVIDOR
 FFMPEG_PATH = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
 
 def limpar_pastas():
     try:
         for folder in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
             for filename in os.listdir(folder):
-                # Não deleta a pasta images!
                 if filename == 'images': continue 
-                
                 file_path = os.path.join(folder, filename)
                 if os.path.isfile(file_path): os.unlink(file_path)
     except: pass
@@ -44,7 +41,7 @@ def gerar_spek(audio_path, title):
         D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
         librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='hz', cmap='inferno')
         plt.colorbar(format='%+2.0f dB')
-        plt.title(f'{title[:30]}...', fontsize=10, color='white')
+        plt.title(f'{title[:40]}...', fontsize=10, color='white')
         plt.tight_layout()
         
         img_name = f"spec_{int(time.time())}_{np.random.randint(100)}.png"
@@ -53,14 +50,12 @@ def gerar_spek(audio_path, title):
         plt.close()
         return img_name
     except Exception as e:
-        print(f"Erro ao gerar Spek para {title}: {e}")
+        print(f"Erro Spek: {e}")
         return None
 
-# Rota especial para servir favicons na raiz
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static/images'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -98,25 +93,39 @@ def index():
                         if os.path.exists(filename):
                             title = info.get('title', 'Audio')
                             spec = gerar_spek(filename, title)
-                            
                             files_info.append({'title': title, 'spectrogram': spec})
                             downloaded_paths.append(filename)
                     except Exception as e:
-                        print(f"Erro no download individual: {e}")
+                        print(f"Erro download: {e}")
                         continue
             
             if not downloaded_paths:
-                flash(f'Erro: Não foi possível baixar. Verifique se o FFmpeg está instalado.', 'error')
+                flash('Erro: Nenhum arquivo foi baixado.', 'error')
                 return redirect(url_for('index'))
 
-            zip_name = f"VibePack_{int(time.time())}.zip"
-            zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
-            with zipfile.ZipFile(zip_path, 'w') as zf:
-                for f in downloaded_paths:
-                    zf.write(f, os.path.basename(f))
+            # LÓGICA DE ENTREGA INTELIGENTE
+            final_filename = ""
+            is_zip = False
+
+            if len(downloaded_paths) == 1:
+                # Se for só 1, entrega o arquivo direto
+                final_filename = os.path.basename(downloaded_paths[0])
+                is_zip = False
+            else:
+                # Se forem vários, cria ZIP com nome bonito
+                data_hora = datetime.now().strftime("%d-%m-%Hh%M") # Ex: 03-12-02h40
+                zip_name = f"Vibe_Mix_{data_hora}.zip"
+                zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
+                with zipfile.ZipFile(zip_path, 'w') as zf:
+                    for f in downloaded_paths:
+                        zf.write(f, os.path.basename(f))
+                final_filename = zip_name
+                is_zip = True
 
             return render_template('index.html', download_ready=True, 
-                                   results=files_info, zip_name=zip_name, 
+                                   results=files_info, 
+                                   final_filename=final_filename,
+                                   is_zip=is_zip,
                                    total_files=len(downloaded_paths))
 
         except Exception as e:
