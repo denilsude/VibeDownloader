@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ativar Assinatura - VibeDownloader</title>
+<title>Planos & Acesso - VibeDownloader</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
@@ -51,11 +51,9 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
-    max-width: 1000px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+    max-width: 1100px;
+    background: rgba(13, 13, 13, 0.95);
+    backdrop-filter: blur(10px);
     padding: 50px;
     border-radius: 24px;
     border: 1px solid #222;
@@ -73,160 +71,152 @@ body {
     border-radius: 24px 24px 0 0;
 }
 
-h1 {
-    font-size: 2em;
-    font-weight: 900;
-    margin-bottom: 10px;
-    text-align: center;
-}
+.header-section { text-align: center; margin-bottom: 40px; }
+h1 { font-size: 2.2em; font-weight: 900; margin-bottom: 10px; color: #fff; }
+.subtitle { color: #888; font-size: 1.1em; }
 
-.subtitle {
-    text-align: center;
-    color: #888;
-    margin-bottom: 30px;
+.flash { 
+    padding: 15px; margin-bottom: 30px; border-radius: 12px; 
+    text-align: center; font-weight: 600;
 }
+.flash.error { background: rgba(255, 80, 80, 0.1); color: #ff9999; border: 1px solid rgba(255, 80, 80, 0.3); }
+.flash.success { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.3); }
 
-/* PLAN CARDS */
+/* GRID DE 4 OPÇÕES */
 .plans-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
 }
 
 .plan-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     border: 2px solid transparent;
-    border-radius: 16px;
-    padding: 25px;
+    border-radius: 20px;
+    padding: 30px 20px;
     cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .plan-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .plan-card.selected {
     border-color: #00ff7f;
-    background: rgba(0, 255, 127, 0.1);
-    box-shadow: 0 0 20px rgba(0, 255, 127, 0.2);
+    background: rgba(0, 255, 127, 0.05);
+    box-shadow: 0 0 30px rgba(0, 255, 127, 0.1);
 }
 
-.plan-card.selected::after {
-    content: '✓';
+/* Badge de Recomendado */
+.badge-popular {
     position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 30px;
-    height: 30px;
-    background: #00ff7f;
-    color: #000;
-    border-radius: 50%;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-.plan-name {
-    font-size: 0.9em;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-}
-
-.plan-price {
-    font-size: 2.5em;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 255, 127, 0.2);
+    color: #00ff7f;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7em;
     font-weight: 800;
-    color: #fff;
-    margin-bottom: 10px;
+    text-transform: uppercase;
 }
 
-.plan-price span { font-size: 0.5em; color: #666; }
+.plan-icon { font-size: 2em; margin-bottom: 15px; color: #555; transition: 0.3s; }
+.plan-card:hover .plan-icon { color: #fff; }
+.plan-card.selected .plan-icon { color: #00ff7f; }
 
-.payment-section {
+.plan-name { font-size: 1.1em; font-weight: 700; color: #fff; margin-bottom: 5px; }
+.plan-price { font-size: 2em; font-weight: 900; color: #fff; margin-bottom: 15px; }
+.plan-price span { font-size: 0.4em; color: #666; font-weight: 500; vertical-align: middle; }
+.plan-desc { font-size: 0.85em; color: #888; line-height: 1.5; }
+
+/* CARTÃO DE CUPOM (A 4ª OPÇÃO) */
+.card-coupon {
+    border: 2px dashed rgba(0, 191, 255, 0.3);
+    background: rgba(0, 191, 255, 0.02);
+}
+.card-coupon:hover { border-color: #00bfff; background: rgba(0, 191, 255, 0.05); }
+.card-coupon.selected { border-color: #00bfff; background: rgba(0, 191, 255, 0.1); box-shadow: 0 0 30px rgba(0, 191, 255, 0.15); }
+.card-coupon .plan-icon { color: #00bfff; }
+
+
+/* ÁREAS DE AÇÃO (PAGAMENTO E CUPOM) */
+.action-area { display: none; animation: slideUp 0.4s ease; margin-top: 30px; }
+.action-area.active { display: block; }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Formulário de Cupom */
+.coupon-form-box {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
     background: rgba(0, 0, 0, 0.3);
     padding: 30px;
     border-radius: 16px;
-    border: 1px solid #222;
-    text-align: center;
-    display: none; /* Escondido até selecionar */
-}
-
-.payment-section.active {
-    display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.qr-code-box {
-    width: 200px;
-    height: 200px;
-    background: #fff;
-    margin: 20px auto;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#qrCodeImage {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.pix-code-field {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.5);
     border: 1px solid #333;
-    color: #00ff7f;
-    padding: 12px;
-    border-radius: 8px;
-    font-family: monospace;
-    margin-bottom: 10px;
-    text-align: center;
 }
 
-.action-btn {
-    background: #00ff7f;
-    color: #000;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-weight: 800;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: 0.3s;
+.input-coupon {
     width: 100%;
-    max-width: 300px;
+    padding: 15px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #333;
+    border-radius: 10px;
+    color: #00bfff;
+    font-size: 1.2em;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 800;
+    margin-bottom: 15px;
+    outline: none;
+    transition: 0.3s;
 }
 
-.action-btn:hover {
-    background: #00cc66;
-    transform: scale(1.05);
-}
+.input-coupon:focus { border-color: #00bfff; box-shadow: 0 0 15px rgba(0, 191, 255, 0.2); }
 
-.loading-spinner {
-    display: none;
-    margin: 20px 0;
+.btn-redeem {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #00bfff, #0088cc);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 1em;
+    text-transform: uppercase;
+    transition: 0.3s;
 }
-.spinner {
-    width: 30px; height: 30px; border: 3px solid #333;
-    border-top: 3px solid #00ff88; border-radius: 50%;
-    animation: spin 1s linear infinite; margin: 0 auto 10px;
+.btn-redeem:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3); }
+
+/* Área PIX */
+.pix-area { text-align: center; max-width: 500px; margin: 0 auto; }
+.btn-pix {
+    background: #00ff7f; color: #000; padding: 18px 40px;
+    border-radius: 50px; border: none; font-size: 1.1em; font-weight: 800;
+    cursor: pointer; transition: 0.3s; width: 100%;
+    box-shadow: 0 5px 20px rgba(0, 255, 127, 0.2);
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.btn-pix:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 255, 127, 0.4); }
+
+.qr-container { display: none; margin-top: 30px; }
+.qr-box { background: #fff; padding: 15px; border-radius: 10px; display: inline-block; }
+.qr-img { width: 200px; height: 200px; }
+.copy-field {
+    width: 100%; background: #222; border: 1px solid #444; color: #fff;
+    padding: 12px; margin-top: 15px; border-radius: 8px; font-family: monospace; text-align: center;
+}
 
 @media (max-width: 768px) {
     .payment-container { padding: 30px 20px; }
@@ -239,138 +229,152 @@ h1 {
 <div class="grid-bg"></div>
 
 <div class="payment-container">
-    <div>
-        <h1>Escolha seu Plano</h1>
-        <p class="subtitle">Desbloqueie o poder do Vibe Studio agora</p>
+    <div class="header-section">
+        <h1>Escolha seu Acesso</h1>
+        <p class="subtitle">Selecione um plano ou ative seu convite VIP</p>
     </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
     <div class="plans-grid">
-        <div class="plan-card" onclick="selectPlan(15.00, this)">
-            <div class="plan-name">Start</div>
-            <div class="plan-price">R$ 15<span>/mês</span></div>
-            <div style="font-size: 0.85em; color: #888;">
-                Ideal para iniciantes
+        <div class="plan-card" onclick="selectPlan('pix', 15.00, this)">
+            <div>
+                <i class="fas fa-headphones-alt plan-icon"></i>
+                <div class="plan-name">Start</div>
+                <div class="plan-price">R$ 15<span>/mês</span></div>
             </div>
+            <div class="plan-desc">Acesso básico. Downloads limitados. Ideal para iniciantes.</div>
         </div>
 
-        <div class="plan-card" onclick="selectPlan(20.00, this)">
-            <div class="plan-name">Standard</div>
-            <div class="plan-price">R$ 20<span>/mês</span></div>
-            <div style="font-size: 0.85em; color: #888;">
-                Para DJs ativos
+        <div class="plan-card" onclick="selectPlan('pix', 25.00, this)">
+            <div class="badge-popular">Popular</div>
+            <div>
+                <i class="fas fa-compact-disc plan-icon"></i>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">R$ 25<span>/mês</span></div>
             </div>
+            <div class="plan-desc">Downloads ilimitados. WAV/FLAC. Espectrograma.</div>
         </div>
 
-        <div class="plan-card" onclick="selectPlan(25.00, this)">
-            <div class="plan-name">Professional</div>
-            <div class="plan-price">R$ 25<span>/mês</span></div>
-            <div style="font-size: 0.85em; color: #00ff7f;">
-                ⭐ Mais Popular
+        <div class="plan-card" onclick="selectPlan('pix', 45.00, this)">
+            <div>
+                <i class="fas fa-users plan-icon"></i>
+                <div class="plan-name">Studio</div>
+                <div class="plan-price">R$ 45<span>/mês</span></div>
             </div>
+            <div class="plan-desc">Para equipes ou estúdios. 2 contas simultâneas.</div>
+        </div>
+
+        <div class="plan-card card-coupon" onclick="selectPlan('coupon', 0, this)">
+            <div>
+                <i class="fas fa-ticket-alt plan-icon"></i>
+                <div class="plan-name" style="color: #00bfff;">Tenho Código</div>
+                <div class="plan-price" style="color: #00bfff;">VIP<span>/Acesso</span></div>
+            </div>
+            <div class="plan-desc">Possui um código de convite ou voucher? Ative aqui.</div>
         </div>
     </div>
 
-    <div id="paymentArea" class="payment-section">
-        <h3 style="margin-bottom: 20px;">Pagamento via PIX</h3>
+    <div id="pixSection" class="action-area pix-area">
+        <h3 style="margin-bottom: 20px; color: #00ff7f;">Finalizar com PIX</h3>
+        <p style="color: #aaa; margin-bottom: 25px;">Liberação imediata após o pagamento.</p>
         
-        <div id="initialAction">
-            <button class="action-btn" onclick="generatePix()">
-                <i class="fas fa-qrcode"></i> GERAR QR CODE
-            </button>
+        <button class="btn-pix" id="btnGenPix" onclick="generatePix()">
+            <i class="fas fa-qrcode"></i> GERAR QR CODE
+        </button>
+        
+        <div id="loadingPix" style="display: none; margin-top: 20px; color: #00ff7f;">
+            <i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Gerando cobrança...
         </div>
 
-        <div class="loading-spinner" id="loading">
-            <div class="spinner"></div>
-            <p>Gerando cobrança...</p>
-        </div>
-
-        <div id="pixResult" style="display: none;">
-            <div class="qr-code-box">
-                <img id="qrCodeImage" src="" alt="QR Code PIX">
+        <div id="pixResult" class="qr-container">
+            <div class="qr-box">
+                <img id="qrCodeImage" class="qr-img" src="" alt="QR Code">
             </div>
-            
-            <p style="color: #aaa; font-size: 0.9em; margin-bottom: 10px;">Copie e cole no seu banco:</p>
-            <input type="text" class="pix-code-field" id="pixCode" readonly onclick="this.select()">
-            
-            <button class="action-btn" style="background: #333; color: #fff; font-size: 0.9em; padding: 10px;" onclick="copyCode()">
-                <i class="fas fa-copy"></i> Copiar Código
-            </button>
-            
-            <div style="margin-top: 20px; font-size: 0.85em; color: #00ff7f; animation: pulse 2s infinite;">
-                <i class="fas fa-circle-notch fa-spin"></i> Aguardando pagamento...
-            </div>
+            <input type="text" class="copy-field" id="pixCode" readonly onclick="this.select(); document.execCommand('copy'); alert('Copiado!');">
+            <p style="margin-top: 15px; font-size: 0.85em; color: #888;">Aguardando pagamento automático...</p>
         </div>
     </div>
+
+    <div id="couponSection" class="action-area">
+        <div class="coupon-form-box">
+            <h3 style="margin-bottom: 20px; color: #00bfff;">Ativar Acesso VIP</h3>
+            <form action="{{ url_for('redeem_coupon') }}" method="POST">
+                <input type="text" name="code" class="input-coupon" placeholder="CÓDIGO AQUI" required autocomplete="off">
+                <button type="submit" class="btn-redeem">
+                    <i class="fas fa-unlock"></i> Liberar Acesso
+                </button>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
 let selectedAmount = 0;
-let checkInterval;
 
-function selectPlan(amount, cardElement) {
-    selectedAmount = amount;
-    
-    // UI Update
+function selectPlan(type, amount, card) {
+    // Visual Selection
     document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-    cardElement.classList.add('selected');
+    card.classList.add('selected');
     
-    // Reset Payment Area
-    document.getElementById('paymentArea').classList.add('active');
-    document.getElementById('initialAction').style.display = 'block';
-    document.getElementById('pixResult').style.display = 'none';
-    if(checkInterval) clearInterval(checkInterval);
+    // Toggle Sections
+    if(type === 'coupon') {
+        document.getElementById('pixSection').classList.remove('active');
+        document.getElementById('couponSection').classList.add('active');
+    } else {
+        selectedAmount = amount;
+        document.getElementById('couponSection').classList.remove('active');
+        document.getElementById('pixSection').classList.add('active');
+        
+        // Reset PIX state if changing plans
+        document.getElementById('pixResult').style.display = 'none';
+        document.getElementById('btnGenPix').style.display = 'inline-block';
+        document.getElementById('btnGenPix').innerHTML = `<i class="fas fa-qrcode"></i> GERAR PIX R$ ${amount.toFixed(2)}`;
+    }
 }
 
 async function generatePix() {
-    if(!selectedAmount) return;
-
-    document.getElementById('initialAction').style.display = 'none';
-    document.getElementById('loading').style.display = 'block';
-
+    document.getElementById('btnGenPix').style.display = 'none';
+    document.getElementById('loadingPix').style.display = 'block';
+    
     try {
         const res = await fetch('/create_pix_payment', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ amount: selectedAmount })
         });
-        
         const data = await res.json();
         
         if(data.success) {
+            document.getElementById('loadingPix').style.display = 'none';
+            document.getElementById('pixResult').style.display = 'block';
             document.getElementById('qrCodeImage').src = 'data:image/png;base64,' + data.qr_code;
             document.getElementById('pixCode').value = data.qr_code_text;
             
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('pixResult').style.display = 'block';
-            
-            startCheck(data.external_reference); // A função de check precisa ser adaptada do código anterior se necessário, mas o webhook resolve
-            
-            // Polling simples para feedback visual (opcional se confiar 100% no webhook)
-             checkInterval = setInterval(async () => {
-                const checkRes = await fetch('/payment/check/' + data.external_reference || ''); // Adapte conforme seu backend retorna
-                 // Se o backend retornar sucesso, redirecionar
-             }, 5000);
-
+            // Inicia verificação
+            setInterval(async () => {
+                const check = await fetch('/payment/check/' + data.external_reference);
+                const status = await check.json();
+                if(status.approved) window.location.href = '/';
+            }, 5000);
         } else {
             alert('Erro: ' + data.error);
-            document.getElementById('initialAction').style.display = 'block';
-            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loadingPix').style.display = 'none';
+            document.getElementById('btnGenPix').style.display = 'inline-block';
         }
     } catch(e) {
         alert('Erro de conexão');
-        document.getElementById('initialAction').style.display = 'block';
-        document.getElementById('loading').style.display = 'none';
+        document.getElementById('loadingPix').style.display = 'none';
+        document.getElementById('btnGenPix').style.display = 'inline-block';
     }
 }
-
-function copyCode() {
-    const el = document.getElementById('pixCode');
-    el.select();
-    document.execCommand('copy');
-    alert('Código copiado!');
-}
-
-// Reuse a lógica de polling do seu código anterior para redirecionar
 </script>
 
 </body>

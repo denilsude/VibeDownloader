@@ -437,6 +437,46 @@ def apply_metadata():
         editar_metadados(path, request.form.get('artist'), request.form.get('title'), request.form.get('album'), request.form.get('cover_url'))
         return jsonify({'success': True, 'download_url': url_for('download_file', filename=fname)})
     return jsonify({'error': 'Arquivo sumiu'}), 404
+# ... (código existente acima)
+
+# ===================================
+# NOVA ROTA: RESGATE DE CUPOM (LOGADO)
+# ===================================
+@app.route('/redeem_coupon', methods=['POST'])
+@login_required
+def redeem_coupon():
+    code = request.form.get('code', '').strip().upper()
+    
+    if not code:
+        flash('Digite um código válido.', 'error')
+        return redirect(url_for('payment'))
+        
+    try:
+        coupon = Coupon.query.filter_by(code=code, active=True).first()
+        
+        if coupon:
+            # Aplica o cupom
+            current_user.is_subscriber = True
+            
+            # Se já tiver data futura, soma. Se não, começa de agora.
+            now = datetime.utcnow()
+            if current_user.subscription_expires and current_user.subscription_expires > now:
+                current_user.subscription_expires += timedelta(days=coupon.days)
+            else:
+                current_user.subscription_expires = now + timedelta(days=coupon.days)
+                
+            db.session.commit()
+            
+            flash(f'💎 Sucesso! Cupom ativado. Você ganhou {coupon.days} dias de acesso.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Código inválido ou expirado.', 'error')
+            return redirect(url_for('payment'))
+            
+    except Exception as e:
+        print(f"Erro ao resgatar: {e}")
+        flash('Erro ao processar código.', 'error')
+        return redirect(url_for('payment'))
 
 @app.route('/download/<path:filename>')
 @login_required
