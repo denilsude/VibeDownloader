@@ -3,131 +3,491 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Painel Vibe - Área do DJ</title>
+<title>Vibe Studio - Command Center</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
 <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
-<meta name="theme-color" content="#121212">
+<meta name="theme-color" content="#00ff7f">
 
 <style>
-    /* --- ESTILOS GERAIS (Cyberpunk Clean) --- */
-    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #e0e0e0; min-height: 100%; display: flex; flex-direction: column; }
-    .container { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+    /* === RESET & GLOBAL === */
+    body, html { 
+        margin: 0; 
+        padding: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #050505; 
+        color: #e0e0e0; 
+        min-height: 100vh; 
+        display: flex; 
+        flex-direction: column;
+    }
     
-    .downloader-box { 
-        background-color: #1e1e1e; padding: 30px; border-radius: 20px; 
-        box-shadow: 0 0 40px rgba(0, 255, 127, 0.1); text-align: center; 
-        width: 100%; max-width: 500px; position: relative; z-index: 10;
+    .container { 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    
+    /* === TOP BAR === */
+    .top-bar {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 25px;
+        background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+        border-radius: 50px;
+        border: 1px solid #222;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .user-info { 
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+    
+    .status-dot { 
+        width: 8px; 
+        height: 8px; 
+        background: #00ff7f; 
+        border-radius: 50%; 
+        box-shadow: 0 0 10px #00ff7f;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .btn-logout { 
+        color: #ff5555; 
+        text-decoration: none; 
+        font-size: 0.9em; 
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+    
+    .btn-logout:hover { 
+        color: #ff8888; 
+    }
+
+    /* === PROMO CARD === */
+    .promo-card {
+        background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 255, 127, 0.1));
+        border: 1px solid rgba(0, 191, 255, 0.3);
+        border-left: 4px solid #00bfff;
+        padding: 18px 25px;
+        border-radius: 16px;
+        max-width: 600px;
+        width: 100%;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 20px rgba(0, 191, 255, 0.1);
+    }
+    
+    .promo-title { 
+        color: #00bfff; 
+        font-weight: 700; 
+        font-size: 1.05em; 
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .promo-text { 
+        color: #aaa; 
+        font-size: 0.9em; 
+        line-height: 1.5;
+    }
+    
+    .promo-code {
+        display: inline-block;
+        background: rgba(0, 191, 255, 0.2);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: #00bfff;
+        margin: 0 4px;
+    }
+
+    /* === MAIN BOX === */
+    .studio-box { 
+        background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+        padding: 40px 35px;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 255, 127, 0.1);
+        border: 1px solid #222;
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+    }
+    
+    .studio-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00ff7f, #00bfff);
+        border-radius: 24px 24px 0 0;
+    }
+
+    /* === LOGO & TITLE === */
+    .logo-section {
+        text-align: center;
         margin-bottom: 30px;
     }
-
-    /* --- TOPO: BARRA DO USUÁRIO --- */
-    .user-bar {
-        width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center;
-        margin-bottom: 20px; padding: 10px 20px; background: #1a1a1a; border-radius: 50px;
-        border: 1px solid #333; box-sizing: border-box;
+    
+    .logo-img { 
+        width: 70px; 
+        height: 70px;
+        border-radius: 16px; 
+        box-shadow: 0 8px 25px rgba(0, 255, 127, 0.3);
+        margin-bottom: 15px;
     }
-    .user-info { color: #fff; font-weight: bold; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
-    .user-icon { width: 8px; height: 8px; background: #00ff7f; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #00ff7f; }
-    .btn-logout { color: #ff5555; text-decoration: none; font-size: 0.85em; font-weight: bold; transition: 0.2s; }
-    .btn-logout:hover { color: #ff8888; text-decoration: underline; }
-
-    /* --- CARD DE INDICAÇÃO --- */
-    .promo-card {
-        background: linear-gradient(145deg, #151515, #1e1e1e);
-        border: 1px solid #333; border-left: 4px solid #00bfff;
-        padding: 15px 20px; border-radius: 12px;
-        max-width: 500px; width: 100%; text-align: left;
-        margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    
+    .studio-title { 
+        font-size: 2em; 
+        font-weight: 900; 
+        background: linear-gradient(135deg, #00ff7f, #00bfff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -1px;
+        margin: 0;
     }
-    .promo-title { color: #fff; font-weight: bold; font-size: 1em; margin-bottom: 5px; }
-    .promo-text { color: #888; font-size: 0.85em; line-height: 1.4; }
-    .promo-highlight { color: #00bfff; }
+    
+    .studio-subtitle {
+        color: #666;
+        font-size: 0.85em;
+        margin-top: 5px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
 
-    /* --- LOGO & TÍTULO --- */
-    .logo-link { text-decoration: none; display: inline-block; transition: transform 0.2s; cursor: pointer; }
-    .logo-link:hover { transform: scale(1.05); }
-    .title { font-size: 2.2em; font-weight: 800; color: #00ff7f; margin: 10px 0 5px 0; text-shadow: 0 0 15px rgba(0, 255, 127, 0.4); letter-spacing: -1px; }
+    /* === FLASH MESSAGES === */
+    .flash { 
+        padding: 15px 20px; 
+        margin-bottom: 25px; 
+        border-radius: 12px; 
+        background: rgba(255, 80, 80, 0.1); 
+        color: #ff9999; 
+        border: 1px solid rgba(255, 80, 80, 0.3);
+        font-size: 0.95em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-    /* --- INPUTS & FORM --- */
-    .input-wrapper { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    /* === URL INPUTS === */
+    .input-wrapper { 
+        display: flex; 
+        gap: 10px; 
+        margin-bottom: 15px; 
+        align-items: center;
+    }
+    
     .url-input { 
-        flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; 
-        background-color: #262626; color: #fff; outline: none; transition: 0.3s; 
-        font-size: 16px; 
+        flex: 1; 
+        padding: 16px 18px;
+        border: 2px solid #222;
+        border-radius: 12px;
+        background-color: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        outline: none;
+        transition: all 0.3s;
+        font-size: 1rem;
+        font-family: inherit;
     }
-    .url-input:focus { border-color: #00ff7f; background-color: #1a1a1a; }
     
-    .btn-icon { width: 45px; height: 45px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s; }
-    .btn-add { background-color: #2a2a2a; color: #00ff7f; border: 1px solid #333; }
-    .btn-add:hover { background-color: #00ff7f; color: #000; transform: scale(1.1); }
-    .btn-remove { background-color: #2a1a1a; color: #ff5555; border: 1px solid #331a1a; }
-    .btn-remove:hover { background-color: #ff5555; color: #fff; }
+    .url-input:focus { 
+        border-color: #00ff7f;
+        background-color: rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 0 3px rgba(0, 255, 127, 0.1);
+    }
+    
+    .url-input::placeholder {
+        color: #555;
+    }
+    
+    /* === ICON BUTTONS === */
+    .btn-icon { 
+        width: 48px; 
+        height: 48px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    
+    .btn-add { 
+        background: rgba(0, 255, 127, 0.1);
+        color: #00ff7f;
+        border: 1px solid rgba(0, 255, 127, 0.3);
+    }
+    
+    .btn-add:hover { 
+        background: #00ff7f;
+        color: #000;
+        transform: scale(1.05);
+    }
+    
+    .btn-remove { 
+        background: rgba(255, 80, 80, 0.1);
+        color: #ff5555;
+        border: 1px solid rgba(255, 80, 80, 0.3);
+    }
+    
+    .btn-remove:hover { 
+        background: #ff5555;
+        color: #fff;
+    }
 
-    /* --- SELETOR --- */
-    .format-selector { margin: 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-    .format-option { cursor: pointer; position: relative; }
-    .format-option input { display: none; }
+    /* === FORMAT SELECTOR === */
+    .format-selector { 
+        margin: 30px 0;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .format-option { 
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .format-option input { 
+        display: none;
+    }
+    
     .format-option span { 
-        padding: 10px 25px; border: 2px solid #333; border-radius: 30px; 
-        color: #888; transition: all 0.3s ease; display: inline-block; 
-        font-weight: 700; font-size: 0.9em; background: #262626;
+        padding: 12px 28px;
+        border: 2px solid #222;
+        border-radius: 30px;
+        color: #666;
+        transition: all 0.3s ease;
+        display: inline-block;
+        font-weight: 700;
+        font-size: 0.9em;
+        background: rgba(0, 0, 0, 0.3);
     }
+    
     .format-option input:checked + span { 
-        border-color: #00ff7f; color: #000; background-color: #00ff7f; 
-        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05);
+        border-color: #00ff7f;
+        color: #000;
+        background: #00ff7f;
+        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4);
+        transform: scale(1.05);
     }
 
-    /* --- BOTÕES DE AÇÃO --- */
+    /* === ACTION BUTTONS === */
     .btn-action { 
-        width: 100%; padding: 18px; border: none; border-radius: 15px; 
-        font-weight: 800; cursor: pointer; transition: transform 0.2s; 
-        font-size: 1.1em; display: flex; justify-content: center; align-items: center; 
-        gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;
+        width: 100%;
+        padding: 18px;
+        border: none;
+        border-radius: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1.1em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-top: 15px;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    .btn-convert { background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #050505; }
-    .btn-convert:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 255, 127, 0.3); }
     
-    .btn-download { background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%); color: #050505; }
-    .btn-download:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 191, 255, 0.3); }
+    .btn-convert { 
+        background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%);
+        color: #000;
+        box-shadow: 0 5px 20px rgba(0, 255, 127, 0.3);
+    }
+    
+    .btn-convert:hover { 
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 255, 127, 0.4);
+    }
+    
+    .btn-download { 
+        background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%);
+        color: #000;
+        box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+    }
+    
+    .btn-download:hover { 
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+    }
 
-    .btn-restart { background-color: #262626; color: #fff; border: 1px solid #333; font-size: 0.9em; padding: 15px; }
-    .btn-restart:hover { background-color: #333; border-color: #666; }
+    .btn-restart { 
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        border: 1px solid #333;
+        font-size: 0.95em;
+        padding: 16px;
+    }
+    
+    .btn-restart:hover { 
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #555;
+    }
 
-    /* --- LOADING OVERLAY --- */
+    /* === LOADING OVERLAY === */
     #loading-overlay { 
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background-color: rgba(0, 0, 0, 0.92); z-index: 9999; 
-        flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); 
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        z-index: 9999;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(10px);
     }
-    .pulse-ring { 
-        width: 80px; height: 80px; border-radius: 50%; background: #00ff7f; 
-        box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); animation: pulse-green 2s infinite; 
-        margin-bottom: 30px; display: flex; align-items: center; justify-content: center; 
-    }
-    .pulse-ring svg { width: 40px; fill: #000; }
-    @keyframes pulse-green { 
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); } 
-        70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); } 
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); } 
-    }
-    .loading-text { font-size: 1.5em; font-weight: bold; color: #fff; margin-bottom: 10px; }
-    .loading-subtext { color: #888; font-size: 0.9em; }
-
-    /* --- RESULTADOS --- */
-    .spek-container { margin-top: 20px; background: #000; padding: 10px; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
-    .spek-img { width: 100%; border-radius: 8px; display: block; }
-    .song-label { color: #fff; font-size: 0.85em; margin-bottom: 8px; text-align: left; font-weight: 600; padding-left: 5px; }
     
-    .flash { padding: 15px; margin-bottom: 20px; border-radius: 10px; background: rgba(255,50,50,0.1); color: #ff8888; border: 1px solid #ff4444; font-size: 0.9em; }
+    .pulse-ring { 
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: #00ff7f;
+        box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7);
+        animation: pulse-ring 2s infinite;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3em;
+    }
+    
+    @keyframes pulse-ring { 
+        0% { 
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7);
+        }
+        70% { 
+            transform: scale(1);
+            box-shadow: 0 0 0 40px rgba(0, 255, 127, 0);
+        }
+        100% { 
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(0, 255, 127, 0);
+        }
+    }
+    
+    .loading-text { 
+        font-size: 1.8em;
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: 15px;
+        letter-spacing: 2px;
+    }
+    
+    .loading-subtext { 
+        color: #888;
+        font-size: 1em;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* === RESULTS === */
+    .spek-container { 
+        margin-top: 25px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid #222;
+    }
+    
+    .song-label { 
+        color: #00ff7f;
+        font-size: 0.95em;
+        margin-bottom: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .spek-img { 
+        width: 100%;
+        border-radius: 12px;
+        display: block;
+    }
+    
+    .success-badge {
+        display: inline-block;
+        background: rgba(0, 255, 127, 0.1);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        color: #00ff7f;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+        .studio-box {
+            padding: 30px 20px;
+        }
+        
+        .studio-title {
+            font-size: 1.6em;
+        }
+        
+        .format-selector {
+            gap: 8px;
+        }
+        
+        .format-option span {
+            padding: 10px 20px;
+            font-size: 0.85em;
+        }
+    }
 </style>
 
 <script>
     function addInput() {
         const container = document.getElementById('inputs-container');
-        if(container.children.length >= 10) { alert('Máximo de 10 links por vez!'); return; }
+        if(container.children.length >= 10) { 
+            alert('Máximo de 10 links por vez!'); 
+            return; 
+        }
         const div = document.createElement('div');
         div.className = 'input-wrapper';
         div.innerHTML = `
@@ -139,50 +499,70 @@
     
     function startLoading() {
         document.getElementById('loading-overlay').style.display = 'flex';
-        const steps = ["Conectando ao servidor...", "Baixando em Alta Qualidade...", "Extraindo Áudio...", "Processando Espectrograma...", "Compactando Arquivos...", "Quase lá..."];
+        const steps = [
+            "Conectando aos servidores...",
+            "Baixando em Alta Qualidade...",
+            "Extraindo Áudio Profissional...",
+            "Processando Espectrograma...",
+            "Compactando Arquivos...",
+            "Finalizando..."
+        ];
         let i = 0;
         const subtext = document.getElementById('loading-subtext');
-        setInterval(() => { if (i < steps.length) { subtext.innerText = steps[i]; i++; } }, 3000);
+        const interval = setInterval(() => { 
+            if (i < steps.length) { 
+                subtext.innerText = steps[i];
+                i++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 3000);
     }
 </script>
 </head>
 <body>
 
+<!-- LOADING OVERLAY -->
 <div id="loading-overlay">
-    <div class="pulse-ring">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-    </div>
-    <div class="loading-text">AGUARDE</div>
-    <div id="loading-subtext" class="loading-subtext">Processando sua Vibe...</div>
+    <div class="pulse-ring">🎵</div>
+    <div class="loading-text">PROCESSANDO</div>
+    <div id="loading-subtext" class="loading-subtext">Preparando seu áudio...</div>
 </div>
 
 <div class="container">
     
-    <div class="user-bar">
+    <!-- TOP BAR -->
+    <div class="top-bar">
         <div class="user-info">
-            <span class="user-icon"></span>
-            Olá, {{ current_user.dj_name }}
+            <span class="status-dot"></span>
+            {{ current_user.dj_name }}
         </div>
         <a href="/logout" class="btn-logout">Sair</a>
     </div>
 
+    <!-- PROMO CARD -->
     <div class="promo-card">
-        <div class="promo-title">💎 Programa de Parceiros</div>
+        <div class="promo-title">
+            💎 Programa de Parceiros Ativo
+        </div>
         <div class="promo-text">
-            Indique amigos usando seu código e ganhe <span class="promo-highlight">créditos</span> na mensalidade.
+            Seu código: <span class="promo-code">{{ current_user.referral_code }}</span>
+            Indique amigos e ganhe créditos na mensalidade!
         </div>
     </div>
 
-    <div class="downloader-box">
-        <a href="/" class="logo-link">
-            <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" style="width: 70px; margin-bottom: 5px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-            <h1 class="title" style="margin-top: 0;">VibeDownloader</h1>
-        </a>
+    <!-- MAIN STUDIO BOX -->
+    <div class="studio-box">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-img" alt="Vibe Studio">
+            <h1 class="studio-title">VIBE STUDIO</h1>
+            <p class="studio-subtitle">Professional Audio Command Center</p>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="flash">{{ message }}</div>
+              <div class="flash">⚠️ {{ message }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
@@ -192,7 +572,14 @@
             <form action="/" method="post" onsubmit="startLoading()" autocomplete="off">
                 <div id="inputs-container">
                     <div class="input-wrapper">
-                        <input type="text" name="urls[]" class="url-input" placeholder="Cole o link (YouTube, SoundCloud...)" required autocomplete="off">
+                        <input 
+                            type="text" 
+                            name="urls[]" 
+                            class="url-input" 
+                            placeholder="Cole o link (YouTube, SoundCloud...)" 
+                            required 
+                            autocomplete="off"
+                        >
                         <button type="button" class="btn-icon btn-add" onclick="addInput()">+</button>
                     </div>
                 </div>
@@ -216,30 +603,40 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn-action btn-convert">BAIXAR AGORA</button>
+                <button type="submit" class="btn-action btn-convert">
+                    ⚡ PROCESSAR AGORA
+                </button>
             </form>
         </div>
         {% endif %}
 
         {% if download_ready %}
         <div>
-            <h3 style="color: #00ff7f; margin-bottom: 5px; font-size: 1.5em;">Sucesso!</h3>
+            <div class="success-badge">
+                ✓ Processamento Concluído
+            </div>
             
             {% for item in results %}
             <div class="spek-container">
-                <div class="song-label">🎵 {{ item.title }}</div>
+                <div class="song-label">
+                    🎵 {{ item.title }}
+                </div>
                 {% if item.spectrogram %}
-                <img src="{{ url_for('static', filename=item.spectrogram) }}" class="spek-img">
+                <img src="{{ url_for('static', filename=item.spectrogram) }}" class="spek-img" alt="Espectrograma">
                 {% endif %}
             </div>
             {% endfor %}
 
             <a href="{{ url_for('download_file', filename=final_filename) }}" class="btn-action btn-download">
-                {% if is_zip %} BAIXAR PACOTE (.ZIP) {% else %} BAIXAR ARQUIVO {% endif %}
+                {% if is_zip %}
+                📦 BAIXAR PACOTE (.ZIP)
+                {% else %}
+                💾 BAIXAR ARQUIVO
+                {% endif %}
             </a>
             
             <a href="/" class="btn-action btn-restart">
-                NOVA CONVERSÃO
+                🔄 NOVA CONVERSÃO
             </a>
         </div>
         {% endif %}

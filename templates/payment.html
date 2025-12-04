@@ -3,34 +3,523 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ativar Conta</title>
+<title>Ativar Assinatura - VibeDownloader</title>
+
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+<meta name="theme-color" content="#00ff7f">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <style>
-    body { background: #080808; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-    .box { background: #151515; padding: 40px; border-radius: 20px; border: 1px solid #333; max-width: 400px; }
-    h1 { color: #00ff7f; }
-    .price { font-size: 3em; font-weight: bold; margin: 10px 0; }
-    .price span { font-size: 0.4em; color: #666; }
-    .info { color: #aaa; margin-bottom: 30px; font-size: 0.9em; }
-    .btn-pix { background: #00bfff; color: #000; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; width: 80%; }
-    .logout { display: block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.8em; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    background: #050505;
+    color: #fff; 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.grid-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 255, 127, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 127, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes gridMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(50px); }
+}
+
+.payment-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+    padding: 50px;
+    border-radius: 24px;
+    border: 1px solid #222;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.payment-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00ff7f, #00bfff);
+    border-radius: 24px 24px 0 0;
+}
+
+/* Left Side - Info */
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.welcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 255, 127, 0.1);
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    color: #00ff7f;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 20px;
+    width: fit-content;
+}
+
+h1 {
+    font-size: 2.2em;
+    font-weight: 900;
+    margin-bottom: 15px;
+    letter-spacing: -1px;
+}
+
+.status-badge {
+    display: inline-block;
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    color: #ffaa00;
+    padding: 6px 14px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.price-box {
+    background: rgba(0, 255, 127, 0.05);
+    border: 2px solid rgba(0, 255, 127, 0.2);
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+    margin: 25px 0;
+}
+
+.price {
+    font-size: 4em;
+    font-weight: 900;
+    color: #00ff7f;
+    line-height: 1;
+    margin-bottom: 10px;
+    letter-spacing: -2px;
+}
+
+.price-currency {
+    font-size: 0.35em;
+    vertical-align: super;
+    color: #888;
+}
+
+.price-period {
+    font-size: 0.25em;
+    color: #888;
+}
+
+.price-description {
+    color: #888;
+    font-size: 0.95em;
+}
+
+.benefits {
+    margin: 30px 0;
+}
+
+.benefits h3 {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    color: #aaa;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #bbb;
+    font-size: 0.95em;
+}
+
+.benefit-item i {
+    color: #00ff7f;
+    font-size: 1.1em;
+}
+
+/* Right Side - PIX */
+.payment-action {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 35px;
+    border-radius: 16px;
+    border: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.pix-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.pix-logo {
+    font-size: 3em;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #00ff7f, #00bfff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.pix-header h2 {
+    font-size: 1.5em;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.pix-subtitle {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.qr-code-box {
+    width: 220px;
+    height: 220px;
+    background: #fff;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-code-box::before {
+    content: 'QR CODE PIX';
+    position: absolute;
+    font-size: 0.7em;
+    color: #999;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+.qr-placeholder {
+    width: 180px;
+    height: 180px;
+    background: #f0f0f0;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    color: #ccc;
+}
+
+.pix-code-box {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.pix-code-label {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.pix-code-input {
+    display: flex;
+    gap: 10px;
+}
+
+.pix-code-field {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    color: #00ff7f;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+}
+
+.copy-btn {
+    background: linear-gradient(135deg, #00ff7f, #00cc66);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 127, 0.3);
+}
+
+.instructions {
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(0, 191, 255, 0.05);
+    border: 1px solid rgba(0, 191, 255, 0.2);
+    border-radius: 12px;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: #aaa;
+}
+
+.instructions h4 {
+    color: #00bfff;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.instructions ol {
+    margin-left: 20px;
+}
+
+.instructions li {
+    margin-bottom: 8px;
+}
+
+.support-link {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9em;
+}
+
+.support-link a {
+    color: #00bfff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.support-link a:hover {
+    text-decoration: underline;
+}
+
+.logout-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.logout-link a {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.85em;
+    transition: color 0.2s;
+}
+
+.logout-link a:hover {
+    color: #ff5555;
+}
+
+/* Notification Toast */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #00ff7f, #00cc66);
+    color: #000;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 255, 127, 0.4);
+    font-weight: 600;
+    display: none;
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+}
+
+.toast.show {
+    display: block;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-container {
+        grid-template-columns: 1fr;
+        padding: 30px 20px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+    }
+    
+    .price {
+        font-size: 3em;
+    }
+}
 </style>
 </head>
 <body>
-    <div class="box">
-        <h1>Olá, {{ user.dj_name }}!</h1>
-        <p>Sua conta foi criada, mas está <strong>Pendente</strong>.</p>
-        
-        <div class="price">R$ 25<span>/mês</span></div>
-        <p class="info">Para liberar o VibeDownloader e baixar em WAV ilimitado, ative sua assinatura.</p>
-        
-        <a href="#" class="btn-pix">PAGAR COM PIX (Em Breve)</a>
-        
-        <br><br>
-        <p style="font-size: 0.8em; color: #555;">
-            *Após o pagamento, envie o comprovante para o admin para liberação imediata.
-        </p>
 
-        <a href="/logout" class="logout">Sair e voltar depois</a>
+<div class="grid-bg"></div>
+
+<div class="payment-container">
+    <!-- LEFT SIDE - INFO -->
+    <div class="payment-info">
+        <div class="welcome-badge">
+            <i class="fas fa-user-circle"></i>
+            Olá, {{ user.dj_name }}!
+        </div>
+        
+        <h1>Última Etapa<br>para Liberar o Vibe</h1>
+        
+        <div class="status-badge">
+            <i class="fas fa-clock"></i> Conta Pendente
+        </div>
+        
+        <div class="price-box">
+            <div class="price">
+                <span class="price-currency">R$</span>25<span class="price-period">/mês</span>
+            </div>
+            <p class="price-description">Assinatura mensal • Cancele quando quiser</p>
+        </div>
+        
+        <div class="benefits">
+            <h3>O que você ganha:</h3>
+            <div class="benefit-item">
+                <i class="fas fa-infinity"></i>
+                Downloads ilimitados em WAV/FLAC/AIFF
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-chart-line"></i>
+                Análise de espectro em tempo real
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-layer-group"></i>
+                Download em lote (até 10 faixas)
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-shield-alt"></i>
+                Processamento 100% privado e seguro
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-headset"></i>
+                Suporte prioritário via WhatsApp
+            </div>
+        </div>
     </div>
+    
+    <!-- RIGHT SIDE - PIX PAYMENT -->
+    <div class="payment-action">
+        <div class="pix-header">
+            <div class="pix-logo">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h2>Pagar com PIX</h2>
+            <p class="pix-subtitle">Ativação instantânea após confirmação</p>
+        </div>
+        
+        <div class="qr-code-box">
+            <div class="qr-placeholder">
+                <i class="fas fa-qrcode"></i>
+            </div>
+        </div>
+        
+        <div class="pix-code-box">
+            <div class="pix-code-label">Ou copie o código PIX:</div>
+            <div class="pix-code-input">
+                <input 
+                    type="text" 
+                    class="pix-code-field" 
+                    value="00020126580014BR.GOV.BCB.PIX..." 
+                    id="pixCode"
+                    readonly
+                >
+                <button class="copy-btn" onclick="copyPixCode()">
+                    <i class="fas fa-copy"></i>
+                    Copiar
+                </button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h4><i class="fas fa-info-circle"></i> Como funciona:</h4>
+            <ol>
+                <li>Escaneie o QR Code ou copie o código PIX</li>
+                <li>Abra seu app bancário e cole o código</li>
+                <li>Confirme o pagamento de R$ 25,00</li>
+                <li>Envie o comprovante para nosso WhatsApp</li>
+                <li>Sua conta será liberada em até 5 minutos!</li>
+            </ol>
+        </div>
+        
+        <div class="support-link">
+            <i class="fas fa-whatsapp"></i>
+            <a href="https://wa.me/5562999999999?text=Comprovante%20de%20Pagamento%20-%20{{ user.email }}" target="_blank">
+                Enviar Comprovante via WhatsApp
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="logout-link">
+    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair e voltar depois</a>
+</div>
+
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i> Código PIX copiado!
+</div>
+
+<script>
+function copyPixCode() {
+    const pixCode = document.getElementById('pixCode');
+    pixCode.select();
+    pixCode.setSelectionRange(0, 99999); // Mobile
+    
+    navigator.clipboard.writeText(pixCode.value).then(() => {
+        // Show toast
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    });
+}
+</script>
+
 </body>
 </html>
