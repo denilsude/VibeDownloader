@@ -25,12 +25,13 @@
             {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
         {% endwith %}
 
+<div class="box">
+        <h2>ÁREA DO DJ</h2>
         <form method="POST">
-            <input type="text" name="username" placeholder="Usuário" required>
-            <input type="password" name="password" placeholder="Senha" required>
+            <input type="email" name="email" placeholder="Seu E-mail" required> <input type="password" name="password" placeholder="Sua Senha" required>
             <button type="submit">ENTRAR</button>
         </form>
-        
+        </div>
         <a href="/register" class="link">Não tem conta? <strong>Criar agora</strong></a>
         <a href="/" class="link" style="margin-top: 15px; font-size: 0.8em;">← Voltar ao início</a>
     </div>

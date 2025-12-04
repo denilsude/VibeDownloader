@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ativar Conta</title>
+<style>
+    body { background: #080808; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
+    .box { background: #151515; padding: 40px; border-radius: 20px; border: 1px solid #333; max-width: 400px; }
+    h1 { color: #00ff7f; }
+    .price { font-size: 3em; font-weight: bold; margin: 10px 0; }
+    .price span { font-size: 0.4em; color: #666; }
+    .info { color: #aaa; margin-bottom: 30px; font-size: 0.9em; }
+    .btn-pix { background: #00bfff; color: #000; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; width: 80%; }
+    .logout { display: block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.8em; }
+</style>
+</head>
+<body>
+    <div class="box">
+        <h1>Olá, {{ user.dj_name }}!</h1>
+        <p>Sua conta foi criada, mas está <strong>Pendente</strong>.</p>
+        
+        <div class="price">R$ 25<span>/mês</span></div>
+        <p class="info">Para liberar o VibeDownloader e baixar em WAV ilimitado, ative sua assinatura.</p>
+        
+        <a href="#" class="btn-pix">PAGAR COM PIX (Em Breve)</a>
+        
+        <br><br>
+        <p style="font-size: 0.8em; color: #555;">
+            *Após o pagamento, envie o comprovante para o admin para liberação imediata.
+        </p>
+
+        <a href="/logout" class="logout">Sair e voltar depois</a>
+    </div>
+</body>
+</html>

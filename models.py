@@ -7,14 +7,15 @@ db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False) # Mudou para Email
+    dj_name = db.Column(db.String(150), nullable=False)            # Novo: Nome Artístico
     password_hash = db.Column(db.String(200), nullable=False)
     
-    # Parte Comercial
-    credits = db.Column(db.Float, default=0.0) # Saldo em Reais (R$)
-    is_subscriber = db.Column(db.Boolean, default=False) # Se pagou a mensalidade
-    referral_code = db.Column(db.String(50), unique=True) # Código para convidar amigos
-    referred_by = db.Column(db.String(50), nullable=True) # Quem indicou esse usuário
+    # Controle Comercial
+    credits = db.Column(db.Float, default=0.0)
+    is_subscriber = db.Column(db.Boolean, default=False) # TRAVA: Só entra se for True
+    referral_code = db.Column(db.String(50), unique=True)
+    referred_by = db.Column(db.String(50), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -24,4 +25,4 @@ class User(UserMixin, db.Model):
 
     def generate_referral(self):
         if not self.referral_code:
-            self.referral_code = str(uuid.uuid4())[:8] # Gera código único curto
+            self.referral_code = str(uuid.uuid4())[:8]

@@ -13,22 +13,22 @@ import numpy as np
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory
 from yt_dlp import YoutubeDL
 
-# Importações de Banco e Login
+# Banco e Login
 from models import db, User
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'vibe_secret_key_commercial'
+app.secret_key = 'vibe_secret_key_pro_dj'
 
-# Config Banco de Dados
+# Banco de Dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login' # Se tentar acessar sem logar, manda pra cá
+login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -41,6 +41,7 @@ with app.app_context():
 DOWNLOAD_FOLDER = 'downloads'
 STATIC_FOLDER = 'static'
 
+# Garante pastas
 for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
     if not os.path.exists(f): os.makedirs(f)
 
@@ -71,14 +72,13 @@ def gerar_spek(audio_path, title):
         plt.close()
         return img_name
     except Exception as e:
-        print(f"Erro Spek: {e}")
         return None
 
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
 
-# --- ROTAS DE AUTENTICAÇÃO ---
+# --- AUTENTICAÇÃO E SEGURANÇA ---
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,15 +86,18 @@ def login():
         return redirect(url_for('index'))
         
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+        
+        user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            if not user.is_subscriber:
+                return redirect(url_for('payment'))
             return redirect(url_for('index'))
         else:
-            flash('Usuário ou senha incorretos.', 'error')
+            flash('E-mail ou senha incorretos.', 'error')
             
     return render_template('login.html')
 
@@ -104,22 +107,31 @@ def register():
         return redirect(url_for('index'))
         
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
+        dj_name = request.form.get('dj_name')
         password = request.form.get('password')
         
-        user_exists = User.query.filter_by(username=username).first()
+        user_exists = User.query.filter_by(email=email).first()
         if user_exists:
-            flash('Este nome de usuário já existe.', 'error')
+            flash('Este e-mail já está cadastrado.', 'error')
         else:
-            new_user = User(username=username)
+            new_user = User(email=email, dj_name=dj_name)
             new_user.set_password(password)
-            new_user.generate_referral() # Gera código de indicação
+            new_user.generate_referral()
             db.session.add(new_user)
             db.session.commit()
-            login_user(new_user) # Loga direto após criar
-            return redirect(url_for('index'))
+            
+            login_user(new_user)
+            return redirect(url_for('payment'))
             
     return render_template('register.html')
+
+@app.route('/payment')
+@login_required
+def payment():
+    if current_user.is_subscriber:
+        return redirect(url_for('index'))
+    return render_template('payment.html', user=current_user)
 
 @app.route('/logout')
 @login_required
@@ -127,18 +139,21 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# --- ROTA PRINCIPAL (Protegida) ---
+# --- ÁREA VIP (Protegida) ---
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # SE NÃO ESTIVER LOGADO -> MOSTRA LANDING PAGE
+    # 1. Proteção: Se não logado
     if not current_user.is_authenticated:
         return render_template('landing.html')
 
-    # SE ESTIVER LOGADO -> MOSTRA O DOWNLOADER (Dashboard)
+    # 2. Proteção: Se não pagou
+    if not current_user.is_subscriber:
+        return redirect(url_for('payment'))
+
+    # 3. Lógica do Downloader
     if request.method == 'POST':
         limpar_pastas()
-        
         raw_urls = request.form.getlist('urls[]')
         urls = [u for u in raw_urls if u.strip()]
         format_type = request.form.get('format', 'mp3')
@@ -212,8 +227,9 @@ def index():
     return render_template('index.html', download_ready=False)
 
 @app.route('/download/<path:filename>')
-@login_required # Protege o download também
+@login_required
 def download_file(filename):
+    if not current_user.is_subscriber: return redirect(url_for('payment'))
     return send_file(os.path.join(DOWNLOAD_FOLDER, filename), as_attachment=True)
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VibeDownloader</title>
+<title>Painel Vibe - Área do DJ</title>
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
@@ -12,8 +12,8 @@
 <meta name="theme-color" content="#121212">
 
 <style>
-    /* Estilos Gerais */
-    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; min-height: 100%; display: flex; flex-direction: column; }
+    /* --- ESTILOS GERAIS (Cyberpunk Clean) --- */
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #e0e0e0; min-height: 100%; display: flex; flex-direction: column; }
     .container { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
     
     .downloader-box { 
@@ -23,67 +23,104 @@
         margin-bottom: 30px;
     }
 
-    /* --- LOGO CLICÁVEL (Reset) --- */
+    /* --- TOPO: BARRA DO USUÁRIO --- */
+    .user-bar {
+        width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding: 10px 20px; background: #1a1a1a; border-radius: 50px;
+        border: 1px solid #333; box-sizing: border-box;
+    }
+    .user-info { color: #fff; font-weight: bold; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
+    .user-icon { width: 8px; height: 8px; background: #00ff7f; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #00ff7f; }
+    .btn-logout { color: #ff5555; text-decoration: none; font-size: 0.85em; font-weight: bold; transition: 0.2s; }
+    .btn-logout:hover { color: #ff8888; text-decoration: underline; }
+
+    /* --- CARD DE INDICAÇÃO --- */
+    .promo-card {
+        background: linear-gradient(145deg, #151515, #1e1e1e);
+        border: 1px solid #333; border-left: 4px solid #00bfff;
+        padding: 15px 20px; border-radius: 12px;
+        max-width: 500px; width: 100%; text-align: left;
+        margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    }
+    .promo-title { color: #fff; font-weight: bold; font-size: 1em; margin-bottom: 5px; }
+    .promo-text { color: #888; font-size: 0.85em; line-height: 1.4; }
+    .promo-highlight { color: #00bfff; }
+
+    /* --- LOGO & TÍTULO --- */
     .logo-link { text-decoration: none; display: inline-block; transition: transform 0.2s; cursor: pointer; }
     .logo-link:hover { transform: scale(1.05); }
     .title { font-size: 2.2em; font-weight: 800; color: #00ff7f; margin: 10px 0 5px 0; text-shadow: 0 0 15px rgba(0, 255, 127, 0.4); letter-spacing: -1px; }
 
-    /* --- PROMO CARD (Indique e Ganhe) --- */
-    .promo-card {
-        background: linear-gradient(145deg, #1a1a1a, #222);
-        border: 1px solid #333;
-        border-left: 4px solid #00bfff; /* Azul Cyan */
-        padding: 20px;
-        border-radius: 12px;
-        max-width: 500px;
-        width: 100%;
-        text-align: left;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        position: relative;
-    }
-    .promo-title { color: #fff; font-weight: bold; font-size: 1.1em; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
-    .promo-text { color: #888; font-size: 0.9em; line-height: 1.4; }
-    .promo-highlight { color: #00bfff; font-weight: bold; }
-
-    /* Inputs e Botões */
+    /* --- INPUTS & FORM --- */
     .input-wrapper { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-    .url-input { flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; background-color: #262626; color: #fff; outline: none; transition: 0.3s; font-size: 16px; }
+    .url-input { 
+        flex: 1; padding: 15px; border: 2px solid #333; border-radius: 12px; 
+        background-color: #262626; color: #fff; outline: none; transition: 0.3s; 
+        font-size: 16px; 
+    }
     .url-input:focus { border-color: #00ff7f; background-color: #1a1a1a; }
     
     .btn-icon { width: 45px; height: 45px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; transition: 0.2s; }
     .btn-add { background-color: #2a2a2a; color: #00ff7f; border: 1px solid #333; }
+    .btn-add:hover { background-color: #00ff7f; color: #000; transform: scale(1.1); }
     .btn-remove { background-color: #2a1a1a; color: #ff5555; border: 1px solid #331a1a; }
+    .btn-remove:hover { background-color: #ff5555; color: #fff; }
 
+    /* --- SELETOR --- */
     .format-selector { margin: 25px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
     .format-option { cursor: pointer; position: relative; }
     .format-option input { display: none; }
-    .format-option span { padding: 10px 25px; border: 2px solid #333; border-radius: 30px; color: #888; transition: all 0.3s ease; display: inline-block; font-weight: 700; font-size: 0.9em; background: #262626; }
-    .format-option input:checked + span { border-color: #00ff7f; color: #000; background-color: #00ff7f; box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05); }
+    .format-option span { 
+        padding: 10px 25px; border: 2px solid #333; border-radius: 30px; 
+        color: #888; transition: all 0.3s ease; display: inline-block; 
+        font-weight: 700; font-size: 0.9em; background: #262626;
+    }
+    .format-option input:checked + span { 
+        border-color: #00ff7f; color: #000; background-color: #00ff7f; 
+        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); transform: scale(1.05);
+    }
 
-    .btn-action { width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; transition: transform 0.2s; font-size: 1.1em; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+    /* --- BOTÕES DE AÇÃO --- */
+    .btn-action { 
+        width: 100%; padding: 18px; border: none; border-radius: 15px; 
+        font-weight: 800; cursor: pointer; transition: transform 0.2s; 
+        font-size: 1.1em; display: flex; justify-content: center; align-items: center; 
+        gap: 10px; margin-top: 15px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;
+    }
     .btn-convert { background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #050505; }
+    .btn-convert:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 255, 127, 0.3); }
+    
     .btn-download { background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%); color: #050505; }
+    .btn-download:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 191, 255, 0.3); }
+
     .btn-restart { background-color: #262626; color: #fff; border: 1px solid #333; font-size: 0.9em; padding: 15px; }
-    .btn-action:active { transform: scale(0.98); }
+    .btn-restart:hover { background-color: #333; border-color: #666; }
 
-    /* Barra de Auth (Login/Registro) */
-    .auth-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; width: 100%; max-width: 500px; }
-    .btn-auth { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #1e1e1e; color: #ccc; text-decoration: none; text-align: center; font-size: 0.9em; transition: 0.2s; }
-    .btn-auth:hover { border-color: #00ff7f; color: #00ff7f; }
-    .btn-auth.primary { background: #00ff7f; color: #000; border: none; font-weight: bold; }
-    .btn-auth.primary:hover { opacity: 0.9; }
-
-    #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.92); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-    .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: #00ff7f; box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); animation: pulse-green 2s infinite; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
+    /* --- LOADING OVERLAY --- */
+    #loading-overlay { 
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background-color: rgba(0, 0, 0, 0.92); z-index: 9999; 
+        flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); 
+    }
+    .pulse-ring { 
+        width: 80px; height: 80px; border-radius: 50%; background: #00ff7f; 
+        box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); animation: pulse-green 2s infinite; 
+        margin-bottom: 30px; display: flex; align-items: center; justify-content: center; 
+    }
     .pulse-ring svg { width: 40px; fill: #000; }
-    @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); } }
+    @keyframes pulse-green { 
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); } 
+        70% { transform: scale(1); box-shadow: 0 0 0 30px rgba(0, 255, 127, 0); } 
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); } 
+    }
     .loading-text { font-size: 1.5em; font-weight: bold; color: #fff; margin-bottom: 10px; }
     .loading-subtext { color: #888; font-size: 0.9em; }
 
+    /* --- RESULTADOS --- */
     .spek-container { margin-top: 20px; background: #000; padding: 10px; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
     .spek-img { width: 100%; border-radius: 8px; display: block; }
     .song-label { color: #fff; font-size: 0.85em; margin-bottom: 8px; text-align: left; font-weight: 600; padding-left: 5px; }
+    
     .flash { padding: 15px; margin-bottom: 20px; border-radius: 10px; background: rgba(255,50,50,0.1); color: #ff8888; border: 1px solid #ff4444; font-size: 0.9em; }
 </style>
 
@@ -116,25 +153,24 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
     </div>
     <div class="loading-text">AGUARDE</div>
-    <div id="loading-subtext" class="loading-subtext">Iniciando processos...</div>
+    <div id="loading-subtext" class="loading-subtext">Processando sua Vibe...</div>
 </div>
 
 <div class="container">
     
-    <div class="promo-card">
-        <div class="promo-title">
-            <span style="font-size: 1.5em;">🚀</span> 
-            <div>Programa de Parceiros DJ</div>
+    <div class="user-bar">
+        <div class="user-info">
+            <span class="user-icon"></span>
+            Olá, {{ current_user.dj_name }}
         </div>
-        <div class="promo-text">
-            Indique um amigo e ganhe <span class="promo-highlight">R$ 5,00 de desconto mensal</span> na sua assinatura PRO. 
-            Acumulativo! Se trouxer 5 amigos, sua vibe sai de graça.
-        </div>
+        <a href="/logout" class="btn-logout">Sair</a>
     </div>
 
-    <div class="auth-bar">
-        <a href="#" class="btn-auth">Fazer Login</a>
-        <a href="#" class="btn-auth primary">Criar Conta</a>
+    <div class="promo-card">
+        <div class="promo-title">💎 Programa de Parceiros</div>
+        <div class="promo-text">
+            Indique amigos usando seu código e ganhe <span class="promo-highlight">créditos</span> na mensalidade.
+        </div>
     </div>
 
     <div class="downloader-box">
