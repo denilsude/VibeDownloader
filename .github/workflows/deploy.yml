@@ -11,15 +11,15 @@ jobs:
     - name: Baixar Código
       uses: actions/checkout@v4
 
-    - name: Instalar Dependências do Sistema (Fix Numpy/GCC)
+    - name: Instalar Dependências do Sistema (Fix Numpy e Audio)
       run: |
-        # Atualiza lista de pacotes e instala compiladores necessários para o Numpy
+        # Atualiza pacotes e instala compiladores C/C++ (necessário para numpy/librosa)
         sudo apt-get update
         sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
 
-    - name: Configurar Variáveis de Ambiente (.env)
+    - name: Criar Arquivo .env (Segredos)
       run: |
-        # Cria o arquivo .env usando os Segredos do GitHub
+        # Cria o arquivo de configuração com as chaves do GitHub
         echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" > /root/VibeDownloader/.env
         echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> /root/VibeDownloader/.env
         echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> /root/VibeDownloader/.env
@@ -27,35 +27,35 @@ jobs:
         echo "DATABASE_URI=sqlite:///vibe.db" >> /root/VibeDownloader/.env
         echo "FLASK_ENV=production" >> /root/VibeDownloader/.env
         
-        # Ajusta permissões
+        # Garante permissões de segurança
         chmod 600 /root/VibeDownloader/.env
 
-    - name: Atualizar Código Python
+    - name: Atualizar Aplicação Python
       run: |
         PROJECT_DIR="/root/VibeDownloader"
         
-        # Garante a pasta e permissões
+        # Cria diretório se não existir
         if [ ! -d "$PROJECT_DIR" ]; then 
             git clone https://github.com/denilsude/VibeDownloader.git "$PROJECT_DIR"
         fi
         
         cd "$PROJECT_DIR"
-        # Força atualização do código local com o remoto
         git fetch --all
         git reset --hard origin/main
         
-        # Configura Python
+        # Configura Ambiente Virtual
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
         
-        # Atualiza pip e instala requirements
+        # Instala dependências Python
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install -r requirements.txt
 
     - name: Reiniciar Serviço
       run: |
-        # Atualiza o arquivo de serviço se mudou
+        # Atualiza e reinicia o serviço systemd
         sudo cp /root/VibeDownloader/vibe.service /etc/systemd/system/vibe.service
         sudo systemctl daemon-reload
         sudo systemctl enable vibe
         sudo systemctl restart vibe
+        # Verifica status (opcional, apenas para log)
         sudo systemctl status vibe --no-pager
