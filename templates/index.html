@@ -81,41 +81,6 @@
     
     .btn-logout:hover { color: #ff8888; }
 
-    .promo-card {
-        background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 255, 127, 0.1));
-        border: 1px solid rgba(0, 191, 255, 0.3);
-        border-left: 4px solid #00bfff;
-        padding: 18px 25px;
-        border-radius: 16px;
-        max-width: 600px;
-        width: 100%;
-        margin-bottom: 30px;
-        box-shadow: 0 5px 20px rgba(0, 191, 255, 0.1);
-    }
-    
-    .promo-title { 
-        color: #00bfff; 
-        font-weight: 700; 
-        font-size: 1.05em; 
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .promo-text { color: #aaa; font-size: 0.9em; line-height: 1.5; }
-    
-    .promo-code {
-        display: inline-block;
-        background: rgba(0, 191, 255, 0.2);
-        padding: 4px 12px;
-        border-radius: 6px;
-        font-family: 'Courier New', monospace;
-        font-weight: 700;
-        color: #00bfff;
-        margin: 0 4px;
-    }
-
     .studio-box { 
         background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
         padding: 40px 35px;
@@ -616,14 +581,6 @@
         <a href="/logout" class="btn-logout">Sair</a>
     </div>
 
-    <div class="promo-card">
-        <div class="promo-title">💎 Programa de Parceiros Ativo</div>
-        <div class="promo-text">
-            Seu código: <span class="promo-code">{{ current_user.referral_code }}</span>
-            Indique amigos e ganhe créditos na mensalidade!
-        </div>
-    </div>
-
     <div class="studio-box">
         <div class="logo-section">
             <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-img" alt="Vibe Studio">
@@ -640,12 +597,11 @@
         {% endwith %}
 
         {% if show_metadata_editor %}
-        <!-- METADATA EDITOR -->
         <div class="metadata-editor">
             <div class="editor-header">
-                <div class="editor-badge">✏️ EDITOR DE METADADOS</div>
-                <h2 class="editor-title">Personalizar Informações do Arquivo</h2>
-                <p class="editor-subtitle">Edite antes de baixar para organizar sua biblioteca</p>
+                <div class="editor-badge">✏️ EDITOR & ANÁLISE</div>
+                <h2 class="editor-title">Informações do Arquivo</h2>
+                <p class="editor-subtitle">Confira o espectro e edite as tags antes de salvar</p>
             </div>
             
             <div class="cover-preview">
@@ -655,8 +611,20 @@
                 <div class="cover-placeholder">🎵</div>
                 {% endif %}
             </div>
+
+            {% if file_info.spectrogram %}
+            <div class="spek-container">
+                <div class="song-label">
+                    <i class="fas fa-wave-square"></i> Análise de Espectro
+                </div>
+                <img src="{{ url_for('static', filename=file_info.spectrogram) }}" class="spek-img" alt="Espectrograma">
+                <p style="text-align: center; color: #666; font-size: 0.8em; margin-top: 10px;">
+                    Verifique se o corte de frequência atinge 20kHz+ para qualidade lossless.
+                </p>
+            </div>
+            {% endif %}
             
-            <form id="metadataForm">
+            <form id="metadataForm" style="margin-top: 30px;">
                 <input type="hidden" name="filename" value="{{ file_info.filename }}">
                 <input type="hidden" name="cover_url" value="{{ file_info.thumbnail or '' }}">
                 
@@ -693,7 +661,7 @@
                 </div>
                 
                 <button type="button" class="btn-action btn-download" onclick="applyMetadata()">
-                    💾 APLICAR E BAIXAR
+                    💾 APLICAR TAGS E BAIXAR
                 </button>
                 
                 <a href="/" class="btn-action btn-restart">
@@ -703,7 +671,6 @@
         </div>
         {% elif not download_ready %}
         
-        <!-- DOWNLOAD FORM -->
         <div id="form-area">
             <form action="/" method="post" onsubmit="startLoading()" autocomplete="off">
                 <div id="inputs-container">
@@ -746,7 +713,6 @@
         </div>
         {% else %}
         
-        <!-- DOWNLOAD RESULTS -->
         <div>
             <div class="success-badge">
                 ✓ Processamento Concluído
