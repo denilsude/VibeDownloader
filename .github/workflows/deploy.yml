@@ -11,11 +11,12 @@ jobs:
     - name: Baixar Código
       uses: actions/checkout@v4
 
-    - name: Instalar Dependências do Sistema (Fix Numpy e Audio)
+    - name: Instalar Dependências do Sistema (Compiladores e Imagem)
       run: |
-        # Atualiza pacotes e instala compiladores C/C++ (necessário para numpy/librosa)
+        # Atualiza pacotes e instala compiladores e libs de imagem (JPEG/PNG/ZLIB)
         sudo apt-get update
         sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
+        sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev liblcms2-dev
 
     - name: Criar Arquivo .env (Segredos)
       run: |
@@ -46,9 +47,11 @@ jobs:
         # Configura Ambiente Virtual
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
         
-        # Instala dependências Python
-        ./venv/bin/pip install --upgrade pip
-        ./venv/bin/pip install -r requirements.txt
+        # Atualiza ferramentas de build
+        ./venv/bin/pip install --upgrade pip setuptools wheel
+        
+        # Instala dependências Python (ignorando cache para forçar recompilação se necessário)
+        ./venv/bin/pip install -r requirements.txt --no-cache-dir
 
     - name: Reiniciar Serviço
       run: |
@@ -57,5 +60,5 @@ jobs:
         sudo systemctl daemon-reload
         sudo systemctl enable vibe
         sudo systemctl restart vibe
-        # Verifica status (opcional, apenas para log)
+        # Verifica status
         sudo systemctl status vibe --no-pager
