@@ -11,24 +11,27 @@ jobs:
     - name: Baixar Código
       uses: actions/checkout@v4
 
-    - name: Instalar Dependências do Linux (Imagens e Compiladores)
+    - name: Instalar Dependências do Linux
       run: |
         sudo apt-get update
-        # Instala bibliotecas necessárias para compilar o Pillow no Python 3.13
+        # Garante bibliotecas de imagem e compiladores
         sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
         sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev liblcms2-dev
 
-    - name: Criar Arquivo .env
+    - name: Configurar Ambiente (.env) - BANCO V2
       run: |
         echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" > /root/VibeDownloader/.env
         echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> /root/VibeDownloader/.env
         echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> /root/VibeDownloader/.env
         echo "APP_URL=${{ secrets.APP_URL }}" >> /root/VibeDownloader/.env
-        echo "DATABASE_URI=sqlite:///vibe.db" >> /root/VibeDownloader/.env
+        
+        # MUDANÇA CRÍTICA AQUI: Alteramos para vibe_v2.db para forçar a criação de um banco novo
+        echo "DATABASE_URI=sqlite:///vibe_v2.db" >> /root/VibeDownloader/.env
         echo "FLASK_ENV=production" >> /root/VibeDownloader/.env
+        
         chmod 600 /root/VibeDownloader/.env
 
-    - name: Atualizar Python e Bibliotecas
+    - name: Atualizar Aplicação Python
       run: |
         PROJECT_DIR="/root/VibeDownloader"
         
@@ -42,10 +45,10 @@ jobs:
         
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
         
-        # ATUALIZAÇÃO CRÍTICA PARA PYTHON 3.13
+        # Atualiza pip e ferramentas
         ./venv/bin/pip install --upgrade pip setuptools wheel
         
-        # Tenta instalar preferindo binários, se falhar, compila
+        # Instala dependências (Versão com Pillow corrigido)
         ./venv/bin/pip install -r requirements.txt --prefer-binary
 
     - name: Reiniciar Serviço
