@@ -73,7 +73,6 @@ body {
     border-radius: 24px 24px 0 0;
 }
 
-/* Left Side - Info */
 .payment-info {
     display: flex;
     flex-direction: column;
@@ -172,7 +171,6 @@ h1 {
     font-size: 1.1em;
 }
 
-/* Right Side - PIX */
 .payment-action {
     background: rgba(0, 0, 0, 0.3);
     padding: 35px;
@@ -223,13 +221,10 @@ h1 {
     overflow: hidden;
 }
 
-.qr-code-box::before {
-    content: 'QR CODE PIX';
-    position: absolute;
-    font-size: 0.7em;
-    color: #999;
-    letter-spacing: 2px;
-    font-weight: 700;
+#qrCodeImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .qr-placeholder {
@@ -293,6 +288,46 @@ h1 {
     box-shadow: 0 5px 15px rgba(0, 255, 127, 0.3);
 }
 
+.generate-pix-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #00ff7f, #00cc66);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-weight: 700;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+}
+
+.generate-pix-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 255, 127, 0.4);
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #222;
+    border-top: 4px solid #00ff7f;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .instructions {
     margin-top: 25px;
     padding: 20px;
@@ -318,22 +353,6 @@ h1 {
     margin-bottom: 8px;
 }
 
-.support-link {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 0.9em;
-}
-
-.support-link a {
-    color: #00bfff;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.support-link a:hover {
-    text-decoration: underline;
-}
-
 .logout-link {
     text-align: center;
     margin-top: 20px;
@@ -350,7 +369,6 @@ h1 {
     color: #ff5555;
 }
 
-/* Notification Toast */
 .toast {
     position: fixed;
     bottom: 30px;
@@ -375,7 +393,6 @@ h1 {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .payment-container {
         grid-template-columns: 1fr;
@@ -397,7 +414,6 @@ h1 {
 <div class="grid-bg"></div>
 
 <div class="payment-container">
-    <!-- LEFT SIDE - INFO -->
     <div class="payment-info">
         <div class="welcome-badge">
             <i class="fas fa-user-circle"></i>
@@ -442,7 +458,6 @@ h1 {
         </div>
     </div>
     
-    <!-- RIGHT SIDE - PIX PAYMENT -->
     <div class="payment-action">
         <div class="pix-header">
             <div class="pix-logo">
@@ -452,45 +467,53 @@ h1 {
             <p class="pix-subtitle">Ativação instantânea após confirmação</p>
         </div>
         
-        <div class="qr-code-box">
-            <div class="qr-placeholder">
-                <i class="fas fa-qrcode"></i>
+        {% if not pending_payment %}
+        <button class="generate-pix-btn" onclick="generatePixPayment()">
+            <i class="fas fa-qrcode"></i> GERAR QR CODE PIX
+        </button>
+        {% endif %}
+        
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p style="color: #666;">Gerando código PIX...</p>
+        </div>
+        
+        <div id="pixContent" style="{% if not pending_payment %}display: none;{% endif %} width: 100%;">
+            <div class="qr-code-box">
+                <img id="qrCodeImage" style="display: none;">
+                <div class="qr-placeholder" id="qrPlaceholder">
+                    <i class="fas fa-qrcode"></i>
+                </div>
             </div>
-        </div>
-        
-        <div class="pix-code-box">
-            <div class="pix-code-label">Ou copie o código PIX:</div>
-            <div class="pix-code-input">
-                <input 
-                    type="text" 
-                    class="pix-code-field" 
-                    value="00020126580014BR.GOV.BCB.PIX..." 
-                    id="pixCode"
-                    readonly
-                >
-                <button class="copy-btn" onclick="copyPixCode()">
-                    <i class="fas fa-copy"></i>
-                    Copiar
-                </button>
+            
+            <div class="pix-code-box">
+                <div class="pix-code-label">Ou copie o código PIX:</div>
+                <div class="pix-code-input">
+                    <input 
+                        type="text" 
+                        class="pix-code-field" 
+                        id="pixCode"
+                        readonly
+                    >
+                    <button class="copy-btn" onclick="copyPixCode()">
+                        <i class="fas fa-copy"></i>
+                        Copiar
+                    </button>
+                </div>
             </div>
-        </div>
-        
-        <div class="instructions">
-            <h4><i class="fas fa-info-circle"></i> Como funciona:</h4>
-            <ol>
-                <li>Escaneie o QR Code ou copie o código PIX</li>
-                <li>Abra seu app bancário e cole o código</li>
-                <li>Confirme o pagamento de R$ 25,00</li>
-                <li>Envie o comprovante para nosso WhatsApp</li>
-                <li>Sua conta será liberada em até 5 minutos!</li>
-            </ol>
-        </div>
-        
-        <div class="support-link">
-            <i class="fas fa-whatsapp"></i>
-            <a href="https://wa.me/5562999999999?text=Comprovante%20de%20Pagamento%20-%20{{ user.email }}" target="_blank">
-                Enviar Comprovante via WhatsApp
-            </a>
+            
+            <div class="instructions">
+                <h4><i class="fas fa-info-circle"></i> Como funciona:</h4>
+                <ol>
+                    <li>Escaneie o QR Code ou copie o código PIX</li>
+                    <li>Abra seu app bancário e cole o código</li>
+                    <li>Confirme o pagamento de R$ 25,00</li>
+                    <li>Aguarde... sua conta será liberada automaticamente!</li>
+                </ol>
+                <p style="margin-top: 15px; color: #00bfff;">
+                    <i class="fas fa-bolt"></i> A liberação é automática e leva até 30 segundos após a confirmação.
+                </p>
+            </div>
         </div>
     </div>
 </div>
@@ -504,21 +527,126 @@ h1 {
 </div>
 
 <script>
+let checkPaymentInterval;
+let externalReference;
+
+async function generatePixPayment() {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const pixContent = document.getElementById('pixContent');
+    const generateBtn = document.querySelector('.generate-pix-btn');
+    
+    generateBtn.style.display = 'none';
+    loadingSpinner.style.display = 'block';
+    
+    try {
+        const response = await fetch('/create_pix_payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mostra QR Code
+            if (data.qr_code) {
+                const qrImage = document.getElementById('qrCodeImage');
+                const qrPlaceholder = document.getElementById('qrPlaceholder');
+                qrImage.src = 'data:image/png;base64,' + data.qr_code;
+                qrImage.style.display = 'block';
+                qrPlaceholder.style.display = 'none';
+            }
+            
+            // Mostra código PIX
+            if (data.qr_code_text) {
+                document.getElementById('pixCode').value = data.qr_code_text;
+            }
+            
+            loadingSpinner.style.display = 'none';
+            pixContent.style.display = 'block';
+            
+            // Salva referência e inicia verificação
+            externalReference = data.external_reference;
+            startPaymentCheck();
+            
+        } else {
+            alert('Erro ao gerar pagamento: ' + (data.error || 'Desconhecido'));
+            generateBtn.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+        }
+        
+    } catch (error) {
+        alert('Erro de conexão: ' + error);
+        generateBtn.style.display = 'block';
+        loadingSpinner.style.display = 'none';
+    }
+}
+
+function startPaymentCheck() {
+    // Verifica status a cada 5 segundos
+    checkPaymentInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/payment/check/${externalReference}`);
+            const data = await response.json();
+            
+            if (data.approved) {
+                clearInterval(checkPaymentInterval);
+                showToast('Pagamento aprovado! Redirecionando...');
+                setTimeout(() => {
+                    window.location.href = '/payment/success';
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar pagamento:', error);
+        }
+    }, 5000);
+}
+
 function copyPixCode() {
     const pixCode = document.getElementById('pixCode');
     pixCode.select();
-    pixCode.setSelectionRange(0, 99999); // Mobile
+    pixCode.setSelectionRange(0, 99999);
     
     navigator.clipboard.writeText(pixCode.value).then(() => {
-        // Show toast
-        const toast = document.getElementById('toast');
-        toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        showToast('Código PIX copiado!');
     });
 }
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Se já existe pagamento pendente, inicia verificação
+{% if pending_payment %}
+externalReference = '{{ pending_payment.external_reference }}';
+startPaymentCheck();
+
+{% if pending_payment.pix_qr_code %}
+const qrImage = document.getElementById('qrCodeImage');
+const qrPlaceholder = document.getElementById('qrPlaceholder');
+qrImage.src = 'data:image/png;base64,{{ pending_payment.pix_qr_code }}';
+qrImage.style.display = 'block';
+qrPlaceholder.style.display = 'none';
+{% endif %}
+
+{% if pending_payment.pix_code %}
+document.getElementById('pixCode').value = '{{ pending_payment.pix_code }}';
+{% endif %}
+{% endif %}
+
+// Limpa intervalo ao sair da página
+window.addEventListener('beforeunload', () => {
+    if (checkPaymentInterval) {
+        clearInterval(checkPaymentInterval);
+    }
+});
 </script>
 
 </body>

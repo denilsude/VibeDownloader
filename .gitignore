@@ -1,6 +1,10 @@
 venv/
-pycache/
+__pycache__/
 downloads/
 *.pyc
 .env
 .DS_Store
+*.db
+*.log
+.vscode/
+node_modules/

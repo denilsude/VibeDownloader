@@ -2,7 +2,7 @@ import os
 import shutil
 import zipfile
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -19,23 +19,33 @@ from mutagen.wave import WAVE
 import requests
 from io import BytesIO
 from PIL import Image
+import mercadopago
+from dotenv import load_dotenv
+import uuid
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 # Banco e Login
-from models import db, User
+from models import db, User, Payment
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'vibe_secret_key_pro_dj_2024_ultra_secure'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'vibe_secret_key_pro_dj_2024_ultra_secure')
 
 # Banco de Dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'sqlite:///vibe.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Mercado Pago SDK
+MP_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
+sdk = mercadopago.SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -48,7 +58,6 @@ with app.app_context():
 DOWNLOAD_FOLDER = 'downloads'
 STATIC_FOLDER = 'static'
 
-# Garante pastas
 for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
     if not os.path.exists(f): 
         os.makedirs(f)
@@ -93,11 +102,8 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
     try:
         ext = os.path.splitext(file_path)[1].lower()
         
-        # MP3
         if ext == '.mp3':
             audio = MP3(file_path, ID3=ID3)
-            
-            # Remove tags antigas
             try:
                 audio.delete()
             except:
@@ -112,12 +118,10 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
             if album:
                 audio.tags.add(TALB(encoding=3, text=album))
             
-            # Adiciona capa
             if cover_url:
                 try:
                     response = requests.get(cover_url, timeout=10)
                     if response.status_code == 200:
-                        # Redimensiona imagem para 500x500 (otimização)
                         img = Image.open(BytesIO(response.content))
                         img = img.resize((500, 500), Image.Resampling.LANCZOS)
                         img_bytes = BytesIO()
@@ -128,7 +132,7 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
                             APIC(
                                 encoding=3,
                                 mime='image/jpeg',
-                                type=3,  # Cover (front)
+                                type=3,
                                 desc='Cover',
                                 data=img_bytes.read()
                             )
@@ -138,7 +142,6 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
             
             audio.save()
         
-        # FLAC
         elif ext == '.flac':
             audio = FLAC(file_path)
             if title:
@@ -147,28 +150,8 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
                 audio['artist'] = artist
             if album:
                 audio['album'] = album
-            
-            # Adiciona capa FLAC
-            if cover_url:
-                try:
-                    response = requests.get(cover_url, timeout=10)
-                    if response.status_code == 200:
-                        img = Image.open(BytesIO(response.content))
-                        img = img.resize((500, 500), Image.Resampling.LANCZOS)
-                        img_bytes = BytesIO()
-                        img.save(img_bytes, format='JPEG')
-                        
-                        picture = mutagen.flac.Picture()
-                        picture.type = 3  # Cover (front)
-                        picture.mime = 'image/jpeg'
-                        picture.data = img_bytes.getvalue()
-                        audio.add_picture(picture)
-                except Exception as e:
-                    print(f"Erro ao adicionar capa FLAC: {e}")
-            
             audio.save()
         
-        # WAV (limitado - usa ID3v2)
         elif ext == '.wav':
             try:
                 audio = WAVE(file_path)
@@ -179,7 +162,7 @@ def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=N
                     audio['TPE1'] = TPE1(encoding=3, text=artist)
                 audio.save()
             except:
-                pass  # WAV tem suporte limitado a tags
+                pass
         
         return True
     except Exception as e:
@@ -268,13 +251,6 @@ def register():
             
     return render_template('register.html')
 
-@app.route('/payment')
-@login_required
-def payment():
-    if current_user.is_subscriber:
-        return redirect(url_for('index'))
-    return render_template('payment.html', user=current_user)
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -283,7 +259,195 @@ def logout():
     return redirect(url_for('login'))
 
 # ===================================
-# DOWNLOADER + EDITOR DE METADADOS
+# PAGAMENTO PIX - MERCADO PAGO
+# ===================================
+
+@app.route('/payment')
+@login_required
+def payment():
+    """Tela de pagamento PIX"""
+    if current_user.is_subscriber:
+        return redirect(url_for('index'))
+    
+    # Verifica se já existe um pagamento pendente
+    pending_payment = Payment.query.filter_by(
+        user_id=current_user.id,
+        status='pending'
+    ).first()
+    
+    return render_template('payment.html', 
+                          user=current_user,
+                          pending_payment=pending_payment)
+
+@app.route('/create_pix_payment', methods=['POST'])
+@login_required
+def create_pix_payment():
+    """Cria uma preferência de pagamento PIX no Mercado Pago"""
+    
+    if not sdk:
+        return jsonify({
+            'error': 'Mercado Pago não configurado. Configure MERCADOPAGO_ACCESS_TOKEN no .env'
+        }), 500
+    
+    try:
+        # Gera referência única
+        external_reference = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
+        
+        # Cria preferência de pagamento
+        preference_data = {
+            "items": [
+                {
+                    "title": "VibeDownloader - Assinatura Mensal",
+                    "quantity": 1,
+                    "unit_price": 25.00,
+                    "currency_id": "BRL"
+                }
+            ],
+            "payer": {
+                "name": current_user.dj_name,
+                "email": current_user.email
+            },
+            "payment_methods": {
+                "excluded_payment_types": [
+                    {"id": "credit_card"},
+                    {"id": "debit_card"},
+                    {"id": "ticket"}
+                ],
+                "installments": 1
+            },
+            "external_reference": external_reference,
+            "notification_url": f"{os.getenv('APP_URL', 'http://localhost:5002')}/webhook/mercadopago",
+            "back_urls": {
+                "success": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/success",
+                "failure": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/failure",
+                "pending": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/pending"
+            },
+            "auto_return": "approved",
+            "expires": True,
+            "expiration_date_from": datetime.utcnow().isoformat(),
+            "expiration_date_to": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        }
+        
+        # Cria preferência no MP
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+        
+        # Salva no banco
+        new_payment = Payment(
+            user_id=current_user.id,
+            preference_id=preference["id"],
+            external_reference=external_reference,
+            amount=25.00,
+            status='pending',
+            payment_method='pix',
+            expires_at=datetime.utcnow() + timedelta(hours=24)
+        )
+        
+        # Busca dados do PIX
+        if "point_of_interaction" in preference and "transaction_data" in preference["point_of_interaction"]:
+            transaction_data = preference["point_of_interaction"]["transaction_data"]
+            new_payment.pix_qr_code = transaction_data.get("qr_code_base64")
+            new_payment.pix_code = transaction_data.get("qr_code")
+        
+        db.session.add(new_payment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'preference_id': preference["id"],
+            'init_point': preference["init_point"],
+            'qr_code': new_payment.pix_qr_code,
+            'qr_code_text': new_payment.pix_code
+        })
+        
+    except Exception as e:
+        print(f"Erro ao criar pagamento: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/webhook/mercadopago', methods=['POST'])
+def mercadopago_webhook():
+    """Webhook para receber notificações do Mercado Pago"""
+    
+    if not sdk:
+        return jsonify({'error': 'MP not configured'}), 500
+    
+    try:
+        data = request.json
+        
+        # Verifica se é notificação de pagamento
+        if data.get('type') == 'payment':
+            payment_id = data['data']['id']
+            
+            # Busca informações do pagamento no MP
+            payment_info = sdk.payment().get(payment_id)
+            payment_data = payment_info["response"]
+            
+            external_reference = payment_data.get('external_reference')
+            status = payment_data.get('status')
+            
+            # Busca pagamento no banco
+            payment_record = Payment.query.filter_by(
+                external_reference=external_reference
+            ).first()
+            
+            if payment_record:
+                payment_record.payment_id = str(payment_id)
+                payment_record.status = status
+                
+                # Se aprovado, ativa assinatura
+                if status == 'approved':
+                    payment_record.approved_at = datetime.utcnow()
+                    
+                    user = User.query.get(payment_record.user_id)
+                    if user:
+                        user.is_subscriber = True
+                        user.subscription_expires = datetime.utcnow() + timedelta(days=30)
+                
+                db.session.commit()
+        
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Erro no webhook: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/payment/check/<external_reference>')
+@login_required
+def check_payment_status(external_reference):
+    """Verifica status de um pagamento"""
+    payment = Payment.query.filter_by(
+        external_reference=external_reference,
+        user_id=current_user.id
+    ).first()
+    
+    if not payment:
+        return jsonify({'error': 'Pagamento não encontrado'}), 404
+    
+    return jsonify({
+        'status': payment.status,
+        'approved': payment.status == 'approved'
+    })
+
+@app.route('/payment/success')
+@login_required
+def payment_success():
+    flash('Pagamento aprovado! Bem-vindo ao Vibe Studio!', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/payment/failure')
+@login_required
+def payment_failure():
+    flash('Pagamento recusado. Tente novamente.', 'error')
+    return redirect(url_for('payment'))
+
+@app.route('/payment/pending')
+@login_required
+def payment_pending():
+    flash('Pagamento pendente. Aguardando confirmação...', 'warning')
+    return redirect(url_for('payment'))
+
+# ===================================
+# DOWNLOADER
 # ===================================
 
 @app.route('/', methods=['GET', 'POST'])
@@ -350,14 +514,11 @@ def index():
                 flash('Não foi possível baixar nenhum arquivo. Verifique os links.', 'error')
                 return redirect(url_for('index'))
 
-            # Se apenas 1 arquivo, vai para edição de metadados
             if len(downloaded_paths) == 1:
                 return render_template('index.html',
                                        show_metadata_editor=True,
                                        file_info=files_info[0],
                                        format_type=format_type)
-            
-            # Se múltiplos, cria ZIP direto
             else:
                 data_hora = datetime.now().strftime("%d-%m-%Hh%M")
                 zip_name = f"Vibe_Mix_{data_hora}.zip"
@@ -384,7 +545,6 @@ def index():
 @app.route('/apply_metadata', methods=['POST'])
 @login_required
 def apply_metadata():
-    """Aplica metadados editados e finaliza download"""
     if not current_user.is_subscriber:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -400,7 +560,6 @@ def apply_metadata():
         if not os.path.exists(file_path):
             return jsonify({'error': 'Arquivo não encontrado'}), 404
         
-        # Aplica metadados
         success = editar_metadados(file_path, artist, title, album, cover_url)
         
         if success:
