@@ -11,7 +11,26 @@ jobs:
     - name: Baixar Código
       uses: actions/checkout@v4
 
-    - name: Atualizar Código e Dependências
+    - name: Instalar Dependências do Sistema (Fix Numpy/GCC)
+      run: |
+        # Atualiza lista de pacotes e instala compiladores necessários para o Numpy
+        sudo apt-get update
+        sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
+
+    - name: Configurar Variáveis de Ambiente (.env)
+      run: |
+        # Cria o arquivo .env usando os Segredos do GitHub
+        echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" > /root/VibeDownloader/.env
+        echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> /root/VibeDownloader/.env
+        echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> /root/VibeDownloader/.env
+        echo "APP_URL=${{ secrets.APP_URL }}" >> /root/VibeDownloader/.env
+        echo "DATABASE_URI=sqlite:///vibe.db" >> /root/VibeDownloader/.env
+        echo "FLASK_ENV=production" >> /root/VibeDownloader/.env
+        
+        # Ajusta permissões
+        chmod 600 /root/VibeDownloader/.env
+
+    - name: Atualizar Código Python
       run: |
         PROJECT_DIR="/root/VibeDownloader"
         
@@ -21,17 +40,20 @@ jobs:
         fi
         
         cd "$PROJECT_DIR"
+        # Força atualização do código local com o remoto
         git fetch --all
         git reset --hard origin/main
         
         # Configura Python
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
+        
+        # Atualiza pip e instala requirements
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install -r requirements.txt
 
-    - name: Atualizar Serviço do Linux
+    - name: Reiniciar Serviço
       run: |
-        # Copia o arquivo de serviço do repositório para o sistema
+        # Atualiza o arquivo de serviço se mudou
         sudo cp /root/VibeDownloader/vibe.service /etc/systemd/system/vibe.service
         sudo systemctl daemon-reload
         sudo systemctl enable vibe
