@@ -286,10 +286,26 @@ def create_pix_payment():
     
     if not sdk:
         return jsonify({
-            'error': 'Mercado Pago não configurado. Configure MERCADOPAGO_ACCESS_TOKEN no .env'
+            'error': 'Mercado Pago não configurado.'
         }), 500
     
     try:
+        # Recebe o valor do frontend
+        data = request.json
+        amount = float(data.get('amount', 25.00))
+        
+        # Validação de Segurança (Planos Permitidos)
+        allowed_plans = {
+            15.00: "Vibe Acesso Diário",
+            20.00: "Vibe Acesso Semanal", 
+            25.00: "Vibe Acesso Mensal (PRO)"
+        }
+        
+        if amount not in allowed_plans:
+            return jsonify({'error': 'Valor de plano inválido.'}), 400
+            
+        plan_title = allowed_plans[amount]
+        
         # Gera referência única
         external_reference = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
         
@@ -297,9 +313,9 @@ def create_pix_payment():
         preference_data = {
             "items": [
                 {
-                    "title": "VibeDownloader - Assinatura Mensal",
+                    "title": plan_title,
                     "quantity": 1,
-                    "unit_price": 25.00,
+                    "unit_price": amount,
                     "currency_id": "BRL"
                 }
             ],
@@ -316,12 +332,7 @@ def create_pix_payment():
                 "installments": 1
             },
             "external_reference": external_reference,
-            "notification_url": f"{os.getenv('APP_URL', 'http://localhost:5002')}/webhook/mercadopago",
-            "back_urls": {
-                "success": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/success",
-                "failure": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/failure",
-                "pending": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/pending"
-            },
+            "notification_url": f"{os.getenv('APP_URL')}/webhook/mercadopago",
             "auto_return": "approved",
             "expires": True,
             "expiration_date_from": datetime.utcnow().isoformat(),
@@ -337,7 +348,7 @@ def create_pix_payment():
             user_id=current_user.id,
             preference_id=preference["id"],
             external_reference=external_reference,
-            amount=25.00,
+            amount=amount,
             status='pending',
             payment_method='pix',
             expires_at=datetime.utcnow() + timedelta(hours=24)
@@ -354,8 +365,7 @@ def create_pix_payment():
         
         return jsonify({
             'success': True,
-            'preference_id': preference["id"],
-            'init_point': preference["init_point"],
+            'amount': amount,
             'qr_code': new_payment.pix_qr_code,
             'qr_code_text': new_payment.pix_code
         })
@@ -374,18 +384,15 @@ def mercadopago_webhook():
     try:
         data = request.json
         
-        # Verifica se é notificação de pagamento
         if data.get('type') == 'payment':
             payment_id = data['data']['id']
             
-            # Busca informações do pagamento no MP
             payment_info = sdk.payment().get(payment_id)
             payment_data = payment_info["response"]
             
             external_reference = payment_data.get('external_reference')
             status = payment_data.get('status')
             
-            # Busca pagamento no banco
             payment_record = Payment.query.filter_by(
                 external_reference=external_reference
             ).first()
@@ -394,13 +401,14 @@ def mercadopago_webhook():
                 payment_record.payment_id = str(payment_id)
                 payment_record.status = status
                 
-                # Se aprovado, ativa assinatura
                 if status == 'approved':
                     payment_record.approved_at = datetime.utcnow()
                     
                     user = User.query.get(payment_record.user_id)
                     if user:
                         user.is_subscriber = True
+                        # Regra simples: qualquer pagamento libera 30 dias por enquanto
+                        # Você pode sofisticar isso depois baseado no payment_record.amount
                         user.subscription_expires = datetime.utcnow() + timedelta(days=30)
                 
                 db.session.commit()
