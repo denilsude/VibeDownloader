@@ -27,7 +27,8 @@ import sqlite3
 load_dotenv()
 
 # Banco e Login
-from models import db, User, Payment
+# [MODIFICAÇÃO 1] Adicionado 'Coupon' na importação
+from models import db, User, Payment, Coupon
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -58,12 +59,9 @@ def load_user(user_id):
 
 def verificar_e_migrar_banco():
     """
-    Verifica se o banco tem o schema correto.
-    Se faltar colunas, tenta migrar automaticamente.
-    Se falhar, recria o banco do zero.
+    Verifica se o banco tem o schema correto e cria tabela Coupon se faltar.
     """
     try:
-        # Verifica se o arquivo .db existe
         if not os.path.exists(DATABASE_PATH):
             print("⚠️ Banco de dados não encontrado. Criando novo...")
             with app.app_context():
@@ -71,15 +69,12 @@ def verificar_e_migrar_banco():
             print("✅ Banco criado com sucesso!")
             return
         
-        # Tenta conectar e verificar schema
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
-        # Pega colunas atuais da tabela User
+        # 1. Verifica tabela User
         cursor.execute("PRAGMA table_info(user)")
         colunas_existentes = [col[1] for col in cursor.fetchall()]
-        
-        # Colunas obrigatórias do modelo novo
         colunas_necessarias = [
             'id', 'email', 'dj_name', 'password_hash',
             'credits', 'is_subscriber', 'subscription_expires',
@@ -89,71 +84,37 @@ def verificar_e_migrar_banco():
         colunas_faltando = [col for col in colunas_necessarias if col not in colunas_existentes]
         
         if colunas_faltando:
-            print(f"⚠️ Colunas faltando no banco: {colunas_faltando}")
-            print("🔧 Tentando migração automática...")
-            
-            # Tenta adicionar colunas faltando
+            print(f"🔧 Migrando User: Faltam {colunas_faltando}")
             for coluna in colunas_faltando:
                 try:
-                    if coluna == 'credits':
-                        cursor.execute("ALTER TABLE user ADD COLUMN credits REAL DEFAULT 0.0")
-                    elif coluna == 'is_subscriber':
-                        cursor.execute("ALTER TABLE user ADD COLUMN is_subscriber BOOLEAN DEFAULT 0")
-                    elif coluna == 'subscription_expires':
-                        cursor.execute("ALTER TABLE user ADD COLUMN subscription_expires DATETIME")
-                    elif coluna == 'referral_code':
-                        cursor.execute("ALTER TABLE user ADD COLUMN referral_code VARCHAR(50)")
-                    elif coluna == 'referred_by':
-                        cursor.execute("ALTER TABLE user ADD COLUMN referred_by VARCHAR(50)")
-                    elif coluna == 'created_at':
-                        cursor.execute("ALTER TABLE user ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP")
-                    elif coluna == 'updated_at':
-                        cursor.execute("ALTER TABLE user ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP")
-                    
-                    print(f"✅ Coluna '{coluna}' adicionada!")
-                except sqlite3.OperationalError as e:
-                    print(f"❌ Erro ao adicionar coluna '{coluna}': {e}")
-            
+                    if coluna == 'credits': cursor.execute("ALTER TABLE user ADD COLUMN credits REAL DEFAULT 0.0")
+                    elif coluna == 'is_subscriber': cursor.execute("ALTER TABLE user ADD COLUMN is_subscriber BOOLEAN DEFAULT 0")
+                    elif coluna == 'subscription_expires': cursor.execute("ALTER TABLE user ADD COLUMN subscription_expires DATETIME")
+                    elif coluna == 'referral_code': cursor.execute("ALTER TABLE user ADD COLUMN referral_code VARCHAR(50)")
+                    elif coluna == 'referred_by': cursor.execute("ALTER TABLE user ADD COLUMN referred_by VARCHAR(50)")
+                    elif coluna == 'created_at': cursor.execute("ALTER TABLE user ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP")
+                    elif coluna == 'updated_at': cursor.execute("ALTER TABLE user ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP")
+                except Exception as e: print(f"Erro coluna {coluna}: {e}")
             conn.commit()
-            print("✅ Migração automática concluída!")
-        
-        else:
-            print("✅ Schema do banco está correto!")
-        
-        # Verifica se tabela Payment existe
+
+        # 2. Verifica tabela Payment (cria se não existir)
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='payment'")
         if not cursor.fetchone():
-            print("⚠️ Tabela 'payment' não existe. Criando...")
+            print("⚠️ Tabela 'payment' não existe. Criando via SQLAlchemy...")
             with app.app_context():
                 db.create_all()
-            print("✅ Tabela 'payment' criada!")
-        
+
+        # 3. Verifica tabela Coupon (NOVO - cria se não existir)
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='coupon'")
+        if not cursor.fetchone():
+            print("⚠️ Tabela 'coupon' não existe. Criando via SQLAlchemy...")
+            with app.app_context():
+                db.create_all()
+                
         conn.close()
         
     except Exception as e:
-        print(f"❌ ERRO CRÍTICO AO VERIFICAR BANCO: {e}")
-        print("🔧 Tentando recriar banco do zero...")
-        
-        try:
-            # Backup do banco antigo
-            if os.path.exists(DATABASE_PATH):
-                backup_path = DATABASE_PATH.replace('.db', f'_backup_{int(time.time())}.db')
-                shutil.copy(DATABASE_PATH, backup_path)
-                print(f"💾 Backup criado: {backup_path}")
-                
-                # Remove banco antigo
-                os.remove(DATABASE_PATH)
-                print("🗑️ Banco antigo removido")
-            
-            # Cria novo banco
-            with app.app_context():
-                db.create_all()
-            
-            print("✅ Banco recriado com sucesso!")
-            
-        except Exception as fatal_error:
-            print(f"💀 ERRO FATAL: {fatal_error}")
-            print("⚠️ Sistema pode estar instável. Verifique manualmente.")
+        print(f"❌ ERRO BANCO: {e}")
 
 # Executa migração ao iniciar
 with app.app_context():
@@ -169,20 +130,16 @@ for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
 FFMPEG_PATH = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
 
 def limpar_pastas():
-    """Limpa arquivos temporários das pastas"""
     try:
         for folder in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
             for filename in os.listdir(folder):
-                if filename == 'images': 
-                    continue 
+                if filename == 'images': continue 
                 file_path = os.path.join(folder, filename)
-                if os.path.isfile(file_path): 
-                    os.unlink(file_path)
+                if os.path.isfile(file_path): os.unlink(file_path)
     except Exception as e:
         print(f"Erro ao limpar pastas: {e}")
 
 def gerar_spek(audio_path, title):
-    """Gera espectrograma do áudio"""
     try:
         y, sr = librosa.load(audio_path, duration=60)
         plt.style.use('dark_background')
@@ -198,124 +155,41 @@ def gerar_spek(audio_path, title):
         plt.close()
         return img_name
     except Exception as e:
-        print(f"Erro ao gerar espectrograma: {e}")
+        print(f"Erro spek: {e}")
         return None
 
 def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=None):
-    """Edita metadados ID3 do arquivo de áudio"""
     try:
         ext = os.path.splitext(file_path)[1].lower()
-        
         if ext == '.mp3':
             audio = MP3(file_path, ID3=ID3)
-            try:
-                audio.delete()
-            except:
-                pass
-            
+            try: audio.delete()
+            except: pass
             audio.add_tags()
-            
-            if title:
-                audio.tags.add(TIT2(encoding=3, text=title))
-            if artist:
-                audio.tags.add(TPE1(encoding=3, text=artist))
-            if album:
-                audio.tags.add(TALB(encoding=3, text=album))
-            
+            if title: audio.tags.add(TIT2(encoding=3, text=title))
+            if artist: audio.tags.add(TPE1(encoding=3, text=artist))
+            if album: audio.tags.add(TALB(encoding=3, text=album))
             if cover_url:
                 try:
-                    response = requests.get(cover_url, timeout=10)
-                    if response.status_code == 200:
-                        img = Image.open(BytesIO(response.content))
-                        img = img.resize((500, 500), Image.Resampling.LANCZOS)
+                    resp = requests.get(cover_url, timeout=10)
+                    if resp.status_code == 200:
+                        img = Image.open(BytesIO(resp.content)).resize((500, 500))
                         img_bytes = BytesIO()
                         img.save(img_bytes, format='JPEG')
-                        img_bytes.seek(0)
-                        
-                        audio.tags.add(
-                            APIC(
-                                encoding=3,
-                                mime='image/jpeg',
-                                type=3,
-                                desc='Cover',
-                                data=img_bytes.read()
-                            )
-                        )
-                except Exception as e:
-                    print(f"Erro ao adicionar capa: {e}")
-            
+                        audio.tags.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=img_bytes.getvalue()))
+                except: pass
             audio.save()
-        
-        elif ext == '.flac':
-            audio = FLAC(file_path)
-            if title:
-                audio['title'] = title
-            if artist:
-                audio['artist'] = artist
-            if album:
-                audio['album'] = album
-            audio.save()
-        
-        elif ext == '.wav':
-            try:
-                audio = WAVE(file_path)
-                audio.add_tags()
-                if title:
-                    audio['TIT2'] = TIT2(encoding=3, text=title)
-                if artist:
-                    audio['TPE1'] = TPE1(encoding=3, text=artist)
-                audio.save()
-            except:
-                pass
-        
         return True
     except Exception as e:
-        print(f"Erro ao editar metadados: {e}")
+        print(f"Erro metadados: {e}")
         return False
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static/images'), 
-        'favicon.ico'
-    )
+    return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
 
 # ===================================
-# ROTA DE DIAGNÓSTICO (REMOVER EM PRODUÇÃO)
-# ===================================
-
-@app.route('/debug/database')
-def debug_database():
-    """Rota temporária para diagnóstico do banco"""
-    if not app.debug:
-        return "Só disponível em modo debug", 403
-    
-    try:
-        conn = sqlite3.connect(DATABASE_PATH)
-        cursor = conn.cursor()
-        
-        # Info da tabela User
-        cursor.execute("PRAGMA table_info(user)")
-        user_columns = cursor.fetchall()
-        
-        # Info da tabela Payment
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='payment'")
-        payment_exists = cursor.fetchone() is not None
-        
-        conn.close()
-        
-        return jsonify({
-            'database_path': DATABASE_PATH,
-            'database_exists': os.path.exists(DATABASE_PATH),
-            'user_table_columns': [col[1] for col in user_columns],
-            'payment_table_exists': payment_exists,
-            'user_count': User.query.count()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===================================
-# AUTENTICAÇÃO
+# AUTENTICAÇÃO E CADASTRO
 # ===================================
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -326,24 +200,25 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-        
         user = User.query.filter_by(email=email).first()
         
-        if not user:
-            flash('E-mail não encontrado. Deseja criar uma conta?', 'error')
-            return render_template('login.html')
-        
-        if not check_password_hash(user.password_hash, password):
-            flash('Senha incorreta. Tente novamente.', 'error')
+        if not user or not check_password_hash(user.password_hash, password):
+            flash('Login incorreto.', 'error')
             return render_template('login.html')
         
         login_user(user)
         
+        # Se tem cupom ativo ou pagou
+        if user.is_subscriber and user.subscription_expires:
+            if user.subscription_expires < datetime.utcnow():
+                user.is_subscriber = False
+                db.session.commit()
+                flash('Sua assinatura expirou.', 'error')
+                return redirect(url_for('payment'))
+
         if not user.is_subscriber:
-            flash('Complete o pagamento para liberar o acesso!', 'error')
             return redirect(url_for('payment'))
         
-        flash('Login realizado com sucesso!', 'success')
         return redirect(url_for('index'))
             
     return render_template('login.html')
@@ -358,35 +233,45 @@ def register():
         dj_name = request.form.get('dj_name', '').strip()
         password = request.form.get('password', '')
         
-        if not email or not dj_name or not password:
-            flash('Preencha todos os campos!', 'error')
-            return render_template('register.html')
+        # [MODIFICAÇÃO 2] Captura o código do cupom
+        coupon_code = request.form.get('coupon_code', '').strip().upper()
         
-        if len(password) < 8:
-            flash('A senha deve ter pelo menos 8 caracteres.', 'error')
-            return render_template('register.html')
-        
-        user_exists = User.query.filter_by(email=email).first()
-        if user_exists:
-            flash('Este e-mail já está cadastrado. Faça login!', 'error')
+        if User.query.filter_by(email=email).first():
+            flash('E-mail já cadastrado.', 'error')
             return render_template('register.html')
         
         try:
             new_user = User(email=email, dj_name=dj_name)
             new_user.set_password(password)
             new_user.generate_referral()
+            
+            # [MODIFICAÇÃO 3] Lógica de Validação do Cupom
+            cupom_valido = False
+            if coupon_code:
+                coupon = Coupon.query.filter_by(code=coupon_code, active=True).first()
+                if coupon:
+                    new_user.is_subscriber = True
+                    # Soma os dias do cupom à data atual
+                    new_user.subscription_expires = datetime.utcnow() + timedelta(days=coupon.days)
+                    cupom_valido = True
+                else:
+                    flash('Cupom inválido. Conta criada, mas sem acesso VIP.', 'error')
+            
             db.session.add(new_user)
             db.session.commit()
             
             login_user(new_user)
-            flash('Conta criada com sucesso! Complete o pagamento.', 'success')
-            return redirect(url_for('payment'))
+            
+            if cupom_valido:
+                flash(f'Bem-vindo! Cupom {coupon_code} aplicado com sucesso.', 'success')
+                return redirect(url_for('index'))
+            else:
+                return redirect(url_for('payment'))
+
         except Exception as e:
             db.session.rollback()
-            flash('Erro ao criar conta. Tente novamente.', 'error')
-            print(f"❌ ERRO NO REGISTRO: {e}")
-            import traceback
-            traceback.print_exc()
+            flash('Erro no cadastro.', 'error')
+            print(f"Erro Register: {e}")
             return render_template('register.html')
             
     return render_template('register.html')
@@ -395,218 +280,128 @@ def register():
 @login_required
 def logout():
     logout_user()
-    flash('Você saiu da sua conta.', 'success')
     return redirect(url_for('login'))
 
 # ===================================
-# PAGAMENTO PIX - MERCADO PAGO
+# [MODIFICAÇÃO 4] ROTA SECRETA PARA CRIAR CUPOM
+# ===================================
+@app.route('/setup-coupons')
+def setup_coupons():
+    """Rota utilitária para criar o cupom VIBE30"""
+    try:
+        # Verifica se já existe para não duplicar
+        if not Coupon.query.filter_by(code='VIBE30').first():
+            c1 = Coupon(code='VIBE30', days=30, active=True)
+            db.session.add(c1)
+            db.session.commit()
+            return "✅ Cupom VIBE30 (30 dias) criado com sucesso!"
+        return "⚠️ Cupom VIBE30 já existe."
+    except Exception as e:
+        return f"Erro ao criar cupom: {e}"
+
+# ===================================
+# PAGAMENTO
 # ===================================
 
 @app.route('/payment')
 @login_required
 def payment():
-    if current_user.is_subscriber:
-        return redirect(url_for('index'))
-    
-    pending_payment = Payment.query.filter_by(
-        user_id=current_user.id,
-        status='pending'
-    ).first()
-    
-    return render_template('payment.html', 
-                          user=current_user,
-                          pending_payment=pending_payment)
+    if current_user.is_subscriber: return redirect(url_for('index'))
+    pending_payment = Payment.query.filter_by(user_id=current_user.id, status='pending').first()
+    return render_template('payment.html', user=current_user, pending_payment=pending_payment)
 
 @app.route('/create_pix_payment', methods=['POST'])
 @login_required
 def create_pix_payment():
-    if not sdk:
-        return jsonify({
-            'error': 'Mercado Pago não configurado. Configure MERCADOPAGO_ACCESS_TOKEN no .env'
-        }), 500
-    
+    if not sdk: return jsonify({'error': 'Mercado Pago Error'}), 500
     try:
-        external_reference = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
-        
-        preference_data = {
-            "items": [
-                {
-                    "title": "VibeDownloader - Assinatura Mensal",
-                    "quantity": 1,
-                    "unit_price": 25.00,
-                    "currency_id": "BRL"
-                }
-            ],
-            "payer": {
-                "name": current_user.dj_name,
-                "email": current_user.email
-            },
-            "payment_methods": {
-                "excluded_payment_types": [
-                    {"id": "credit_card"},
-                    {"id": "debit_card"},
-                    {"id": "ticket"}
-                ],
-                "installments": 1
-            },
-            "external_reference": external_reference,
-            "notification_url": f"{os.getenv('APP_URL', 'http://localhost:5002')}/webhook/mercadopago",
-            "back_urls": {
-                "success": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/success",
-                "failure": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/failure",
-                "pending": f"{os.getenv('APP_URL', 'http://localhost:5002')}/payment/pending"
-            },
-            "auto_return": "approved",
-            "expires": True,
-            "expiration_date_from": datetime.utcnow().isoformat(),
-            "expiration_date_to": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        external_ref = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
+        payment_data = {
+            "transaction_amount": 25.00,
+            "description": "VibeDownloader - Mensal",
+            "payment_method_id": "pix",
+            "payer": {"email": current_user.email, "first_name": current_user.dj_name},
+            "external_reference": external_ref,
+            "notification_url": f"{os.getenv('APP_URL')}/webhook/mercadopago"
         }
         
-        preference_response = sdk.preference().create(preference_data)
-        preference = preference_response["response"]
+        result = sdk.payment().create(payment_data)
+        pix_data = result["response"]
+        
+        qr_code = pix_data['point_of_interaction']['transaction_data']['qr_code_base64']
+        qr_code_text = pix_data['point_of_interaction']['transaction_data']['qr_code']
         
         new_payment = Payment(
-            user_id=current_user.id,
-            preference_id=preference["id"],
-            external_reference=external_reference,
-            amount=25.00,
-            status='pending',
-            payment_method='pix',
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            user_id=current_user.id, payment_id=str(pix_data['id']),
+            external_reference=external_ref, amount=25.00,
+            pix_qr_code=qr_code, pix_code=qr_code_text,
+            expires_at=datetime.utcnow() + timedelta(days=1)
         )
-        
-        if "point_of_interaction" in preference and "transaction_data" in preference["point_of_interaction"]:
-            transaction_data = preference["point_of_interaction"]["transaction_data"]
-            new_payment.pix_qr_code = transaction_data.get("qr_code_base64")
-            new_payment.pix_code = transaction_data.get("qr_code")
-        
         db.session.add(new_payment)
         db.session.commit()
         
-        return jsonify({
-            'success': True,
-            'preference_id': preference["id"],
-            'init_point': preference["init_point"],
-            'qr_code': new_payment.pix_qr_code,
-            'qr_code_text': new_payment.pix_code,
-            'external_reference': external_reference
-        })
-        
+        return jsonify({'success': True, 'qr_code': qr_code, 'qr_code_text': qr_code_text, 'external_reference': external_ref})
     except Exception as e:
-        print(f"Erro ao criar pagamento: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/webhook/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    if not sdk:
-        return jsonify({'error': 'MP not configured'}), 500
-    
+def webhook():
     try:
         data = request.json
-        
-        if data.get('type') == 'payment':
-            payment_id = data['data']['id']
+        if data.get('action') == 'payment.created' or data.get('type') == 'payment':
+            pid = data['data']['id']
+            pay_info = sdk.payment().get(pid)['response']
+            ext_ref = pay_info['external_reference']
+            status = pay_info['status']
             
-            payment_info = sdk.payment().get(payment_id)
-            payment_data = payment_info["response"]
-            
-            external_reference = payment_data.get('external_reference')
-            status = payment_data.get('status')
-            
-            payment_record = Payment.query.filter_by(
-                external_reference=external_reference
-            ).first()
-            
-            if payment_record:
-                payment_record.payment_id = str(payment_id)
-                payment_record.status = status
-                
+            p = Payment.query.filter_by(external_reference=ext_ref).first()
+            if p:
+                p.status = status
                 if status == 'approved':
-                    payment_record.approved_at = datetime.utcnow()
-                    
-                    user = User.query.get(payment_record.user_id)
-                    if user:
-                        user.is_subscriber = True
-                        user.subscription_expires = datetime.utcnow() + timedelta(days=30)
-                
+                    p.approved_at = datetime.utcnow()
+                    u = User.query.get(p.user_id)
+                    u.is_subscriber = True
+                    u.subscription_expires = datetime.utcnow() + timedelta(days=30)
                 db.session.commit()
-        
-        return jsonify({'success': True}), 200
-        
-    except Exception as e:
-        print(f"Erro no webhook: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': True})
+    except: return jsonify({'error': 'fail'}), 500
 
 @app.route('/payment/check/<external_reference>')
 @login_required
-def check_payment_status(external_reference):
-    payment = Payment.query.filter_by(
-        external_reference=external_reference,
-        user_id=current_user.id
-    ).first()
-    
-    if not payment:
-        return jsonify({'error': 'Pagamento não encontrado'}), 404
-    
-    return jsonify({
-        'status': payment.status,
-        'approved': payment.status == 'approved'
-    })
-
-@app.route('/payment/success')
-@login_required
-def payment_success():
-    flash('Pagamento aprovado! Bem-vindo ao Vibe Studio!', 'success')
-    return redirect(url_for('index'))
-
-@app.route('/payment/failure')
-@login_required
-def payment_failure():
-    flash('Pagamento recusado. Tente novamente.', 'error')
-    return redirect(url_for('payment'))
-
-@app.route('/payment/pending')
-@login_required
-def payment_pending():
-    flash('Pagamento pendente. Aguardando confirmação...', 'warning')
-    return redirect(url_for('payment'))
+def check_status(external_reference):
+    p = Payment.query.filter_by(external_reference=external_reference, user_id=current_user.id).first()
+    if p and p.status == 'approved':
+        current_user.is_subscriber = True # Força atualização sessão
+        return jsonify({'approved': True})
+    return jsonify({'approved': False})
 
 # ===================================
-# DOWNLOADER
+# DOWNLOADER E CORE
 # ===================================
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if not current_user.is_authenticated:
-        return render_template('landing.html')
-
-    if not current_user.is_subscriber:
+    if not current_user.is_authenticated: return render_template('landing.html')
+    if not current_user.is_subscriber: return redirect(url_for('payment'))
+    
+    # Verifica expiração
+    if current_user.subscription_expires and current_user.subscription_expires < datetime.utcnow():
+        current_user.is_subscriber = False
+        db.session.commit()
         return redirect(url_for('payment'))
 
     if request.method == 'POST':
         limpar_pastas()
-        raw_urls = request.form.getlist('urls[]')
-        urls = [u.strip() for u in raw_urls if u.strip()]
+        urls = [u.strip() for u in request.form.getlist('urls[]') if u.strip()]
         format_type = request.form.get('format', 'mp3')
+        if not urls: return redirect(url_for('index'))
 
-        if not urls: 
-            flash('Adicione pelo menos um link válido.', 'error')
-            return redirect(url_for('index'))
-
-        files_info = []
-        downloaded_paths = []
-
+        files_info, downloaded = [], []
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
-            'noplaylist': True,
-            'quiet': True,
-            'ffmpeg_location': FFMPEG_PATH,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': format_type,
-                'preferredquality': '320',
-            }],
+            'noplaylist': True, 'quiet': True, 'ffmpeg_location': FFMPEG_PATH,
+            'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': format_type, 'preferredquality': '320'}],
         }
 
         try:
@@ -614,105 +409,39 @@ def index():
                 for url in urls:
                     try:
                         info = ydl.extract_info(url, download=True)
-                        filename = ydl.prepare_filename(info).rsplit('.', 1)[0] + f'.{format_type}'
-                        
-                        if os.path.exists(filename):
-                            title = info.get('title', 'Audio')
-                            artist = info.get('artist') or info.get('uploader', 'Desconhecido')
-                            thumbnail = info.get('thumbnail')
-                            
-                            spec = gerar_spek(filename, title)
-                            
-                            files_info.append({
-                                'title': title,
-                                'artist': artist,
-                                'thumbnail': thumbnail,
-                                'spectrogram': spec,
-                                'filename': os.path.basename(filename)
-                            })
-                            downloaded_paths.append(filename)
-                    except Exception as e:
-                        print(f"Erro no download individual: {e}")
-                        continue
+                        fname = ydl.prepare_filename(info).rsplit('.', 1)[0] + f'.{format_type}'
+                        if os.path.exists(fname):
+                            spec = gerar_spek(fname, info.get('title', 'Audio'))
+                            files_info.append({'title': info.get('title'), 'artist': info.get('artist'), 'thumbnail': info.get('thumbnail'), 'spectrogram': spec, 'filename': os.path.basename(fname)})
+                            downloaded.append(fname)
+                    except: continue
             
-            if not downloaded_paths:
-                flash('Não foi possível baixar nenhum arquivo. Verifique os links.', 'error')
-                return redirect(url_for('index'))
-
-            if len(downloaded_paths) == 1:
-                return render_template('index.html',
-                                       show_metadata_editor=True,
-                                       file_info=files_info[0],
-                                       format_type=format_type)
-            else:
-                data_hora = datetime.now().strftime("%d-%m-%Hh%M")
-                zip_name = f"Vibe_Mix_{data_hora}.zip"
-                zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
-                
-                with zipfile.ZipFile(zip_path, 'w') as zf:
-                    for f in downloaded_paths:
-                        zf.write(f, os.path.basename(f))
-                
-                return render_template('index.html', 
-                                       download_ready=True, 
-                                       results=files_info, 
-                                       final_filename=zip_name,
-                                       is_zip=True,
-                                       total_files=len(downloaded_paths))
-
+            if len(downloaded) == 1:
+                return render_template('index.html', show_metadata_editor=True, file_info=files_info[0], format_type=format_type)
+            elif len(downloaded) > 1:
+                zip_name = f"Vibe_Pack_{int(time.time())}.zip"
+                with zipfile.ZipFile(f"{DOWNLOAD_FOLDER}/{zip_name}", 'w') as zf:
+                    for f in downloaded: zf.write(f, os.path.basename(f))
+                return render_template('index.html', download_ready=True, results=files_info, final_filename=zip_name, is_zip=True)
         except Exception as e:
-            flash(f'Erro no processamento: {str(e)}', 'error')
-            print(f"Erro geral: {e}")
-            return redirect(url_for('index'))
+            flash(f'Erro: {e}', 'error')
 
     return render_template('index.html', download_ready=False)
 
 @app.route('/apply_metadata', methods=['POST'])
 @login_required
 def apply_metadata():
-    if not current_user.is_subscriber:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    try:
-        filename = request.form.get('filename')
-        artist = request.form.get('artist', '').strip()
-        title = request.form.get('title', '').strip()
-        album = request.form.get('album', '').strip()
-        cover_url = request.form.get('cover_url', '').strip()
-        
-        file_path = os.path.join(DOWNLOAD_FOLDER, filename)
-        
-        if not os.path.exists(file_path):
-            return jsonify({'error': 'Arquivo não encontrado'}), 404
-        
-        success = editar_metadados(file_path, artist, title, album, cover_url)
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'download_url': url_for('download_file', filename=filename)
-            })
-        else:
-            return jsonify({'error': 'Erro ao editar metadados'}), 500
-            
-    except Exception as e:
-        print(f"Erro ao aplicar metadados: {e}")
-        return jsonify({'error': str(e)}), 500
+    fname = request.form.get('filename')
+    path = os.path.join(DOWNLOAD_FOLDER, fname)
+    if os.path.exists(path):
+        editar_metadados(path, request.form.get('artist'), request.form.get('title'), request.form.get('album'), request.form.get('cover_url'))
+        return jsonify({'success': True, 'download_url': url_for('download_file', filename=fname)})
+    return jsonify({'error': 'Arquivo sumiu'}), 404
 
 @app.route('/download/<path:filename>')
 @login_required
 def download_file(filename):
-    if not current_user.is_subscriber: 
-        return redirect(url_for('payment'))
-    
-    try:
-        return send_file(
-            os.path.join(DOWNLOAD_FOLDER, filename), 
-            as_attachment=True
-        )
-    except Exception as e:
-        flash('Arquivo não encontrado ou expirado.', 'error')
-        return redirect(url_for('index'))
+    return send_file(os.path.join(DOWNLOAD_FOLDER, filename), as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)

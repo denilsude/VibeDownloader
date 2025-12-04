@@ -43,18 +43,18 @@ class Payment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     # Mercado Pago Data
-    payment_id = db.Column(db.String(100), unique=True, nullable=True)  # ID do MP
-    preference_id = db.Column(db.String(100), unique=True, nullable=True)  # ID da preferência
-    external_reference = db.Column(db.String(100), unique=True, nullable=False)  # Nosso ID interno
+    payment_id = db.Column(db.String(100), unique=True, nullable=True)
+    preference_id = db.Column(db.String(100), unique=True, nullable=True)
+    external_reference = db.Column(db.String(100), unique=True, nullable=False)
     
     # Payment Info
     amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), default='pending')  # pending, approved, rejected, cancelled
+    status = db.Column(db.String(50), default='pending')
     payment_method = db.Column(db.String(50), default='pix')
     
     # PIX Data
-    pix_qr_code = db.Column(db.Text, nullable=True)  # QR Code em base64
-    pix_code = db.Column(db.Text, nullable=True)  # Código PIX copiável
+    pix_qr_code = db.Column(db.Text, nullable=True)
+    pix_code = db.Column(db.Text, nullable=True)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -63,3 +63,11 @@ class Payment(db.Model):
     
     def __repr__(self):
         return f'<Payment {self.external_reference} - {self.status}>'
+
+# NOVO MODELO DE CUPOM
+class Coupon(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    days = db.Column(db.Integer, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

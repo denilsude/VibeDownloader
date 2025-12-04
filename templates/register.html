@@ -1,412 +1,460 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Criar Conta - VibeDownloader</title>
-
-<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
-<meta name="theme-color" content="#00ff7f">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body { 
-    background: #050505;
-    color: #fff; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    min-height: 100vh; 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
-
-.grid-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(rgba(0, 191, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 191, 255, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: gridMove 20s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes gridMove {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(50px); }
-}
-
-.register-wrapper {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: 440px;
-}
-
-.box { 
-    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
-    padding: 45px 40px;
-    border-radius: 24px;
-    border: 1px solid #222;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    position: relative;
-}
-
-.box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #00bfff, #00ff7f);
-    border-radius: 24px 24px 0 0;
-}
-
-.logo-mini {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 20px;
-    display: block;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
-}
-
-h2 { 
-    color: #00bfff;
-    margin-bottom: 10px;
-    font-weight: 800;
-    text-align: center;
-    font-size: 1.8em;
-    letter-spacing: -0.5px;
-}
-
-.subtitle {
-    text-align: center;
-    color: #666;
-    font-size: 0.9em;
-    margin-bottom: 35px;
-}
-
-.flash { 
-    padding: 15px 18px;
-    margin-bottom: 25px;
-    border-radius: 12px;
-    font-size: 0.95em;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.flash.error { 
-    background: rgba(255, 80, 80, 0.1);
-    border: 1px solid rgba(255, 80, 80, 0.3);
-    color: #ff9999;
-}
-
-.flash.success {
-    background: rgba(0, 191, 255, 0.1);
-    border: 1px solid rgba(0, 191, 255, 0.3);
-    color: #00bfff;
-}
-
-form {
-    margin-bottom: 25px;
-}
-
-.input-group {
-    margin-bottom: 18px;
-    position: relative;
-}
-
-.input-label {
-    display: block;
-    color: #888;
-    font-size: 0.85em;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.input-icon {
-    position: absolute;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #555;
-    font-size: 1em;
-    pointer-events: none;
-}
-
-input { 
-    width: 100%;
-    padding: 16px 18px 16px 45px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid #333;
-    color: #fff;
-    border-radius: 12px;
-    box-sizing: border-box;
-    outline: none;
-    font-size: 1rem;
-    transition: all 0.3s;
-    font-family: inherit;
-}
-
-input:focus { 
-    border-color: #00bfff;
-    background: rgba(0, 0, 0, 0.5);
-    box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
-}
-
-input:focus + .input-icon {
-    color: #00bfff;
-}
-
-input::placeholder {
-    color: #555;
-}
-
-.password-strength {
-    margin-top: 8px;
-    font-size: 0.8em;
-    color: #666;
-}
-
-.strength-bar {
-    height: 4px;
-    background: #222;
-    border-radius: 2px;
-    margin-top: 6px;
-    overflow: hidden;
-}
-
-.strength-fill {
-    height: 100%;
-    width: 0%;
-    background: #666;
-    transition: all 0.3s;
-}
-
-button { 
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%);
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 1.05em;
-    margin-top: 10px;
-    transition: all 0.3s;
-    color: #000;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
-}
-
-button:hover { 
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 191, 255, 0.4);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-.terms {
-    margin-top: 20px;
-    padding: 15px;
-    background: rgba(0, 191, 255, 0.05);
-    border: 1px solid rgba(0, 191, 255, 0.1);
-    border-radius: 10px;
-    font-size: 0.85em;
-    color: #888;
-    line-height: 1.6;
-}
-
-.terms a {
-    color: #00bfff;
-    text-decoration: none;
-}
-
-.terms a:hover {
-    text-decoration: underline;
-}
-
-.link { 
-    display: block;
-    text-align: center;
-    color: #666;
-    text-decoration: none;
-    font-size: 0.95em;
-    margin-top: 20px;
-    transition: color 0.2s;
-}
-
-.link:hover { 
-    color: #00bfff;
-}
-
-.link strong {
-    color: #00bfff;
-    font-weight: 600;
-}
-
-@media (max-width: 480px) {
-    .box {
-        padding: 35px 25px;
-    }
-    
-    h2 {
-        font-size: 1.5em;
-    }
-}
-</style>
-</head>
-<body>
-
-<div class="grid-bg"></div>
-
-<div class="register-wrapper">
-    <div class="box">
-        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-mini" alt="Logo">
-        
-        <h2>Junte-se ao Vibe</h2>
-        <p class="subtitle">Crie sua conta e comece a baixar em qualidade profissional</p>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" autocomplete="on" id="registerForm">
-            <div class="input-group">
-                <label class="input-label">E-mail</label>
-                <div style="position: relative;">
-                    <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="seu@email.com" 
-                        required 
-                        autocomplete="email"
-                        autofocus
-                    >
-                    <i class="fas fa-envelope input-icon"></i>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                <label class="input-label">Nome Artístico / DJ Name</label>
+<div class="input-group">
+                <label class="input-label">Possui um Cupom?</label>
                 <div style="position: relative;">
                     <input 
                         type="text" 
-                        name="dj_name" 
-                        placeholder="DJ YourName" 
-                        required 
-                        autocomplete="username"
+                        name="coupon_code" 
+                        placeholder="Ex: VIBE30" 
+                        autocomplete="off"
+                        style="text-transform: uppercase;"
                     >
-                    <i class="fas fa-user input-icon"></i>
+                    <i class="fas fa-ticket-alt input-icon"></i>
                 </div>
             </div>
-            
-            <div class="input-group">
-                <label class="input-label">Senha</label>
-                <div style="position: relative;">
-                    <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Mínimo 8 caracteres" 
-                        required 
-                        autocomplete="new-password"
-                        minlength="8"
-                        id="passwordInput"
-                    >
-                    <i class="fas fa-lock input-icon"></i>
-                </div>
-                <div class="password-strength">
-                    <div class="strength-bar">
-                        <div class="strength-fill" id="strengthFill"></div>
-                    </div>
-                    <span id="strengthText">Digite uma senha forte</span>
-                </div>
-            </div>
-            
-            <button type="submit">
-                <i class="fas fa-rocket"></i> Criar Conta
-            </button>
-        </form>
+            ```
 
-        <div class="terms">
-            <i class="fas fa-shield-alt"></i>
-            Ao criar uma conta, você concorda com nossos 
-            <a href="#">Termos de Uso</a> e 
-            <a href="#">Política de Privacidade</a>.
-        </div>
+---
+
+### 3. `app.py`
+Aqui fazemos a lógica: importar o `Coupon`, atualizar o banco e processar o registro.
+
+**Copie e substitua todo o `app.py`:**
+*(Adicionei uma rota `/setup-coupons` no final para você criar o cupom VIBE30 automaticamente apenas acessando o link, sem precisar mexer com banco de dados manual)*.
+
+```python
+import os
+import shutil
+import zipfile
+import time
+from datetime import datetime, timedelta
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+import numpy as np
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory, jsonify
+from yt_dlp import YoutubeDL
+from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
+from mutagen.mp3 import MP3
+from mutagen.flac import FLAC
+from mutagen.wave import WAVE
+import requests
+from io import BytesIO
+from PIL import Image
+import mercadopago
+from dotenv import load_dotenv
+import uuid
+import sqlite3
+
+# Carrega variáveis de ambiente
+load_dotenv()
+
+# Banco e Login (Adicionado Coupon no import)
+from models import db, User, Payment, Coupon
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'vibe_secret_key_pro_dj_2024_ultra_secure')
+
+# Banco de Dados
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'vibe.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Mercado Pago SDK
+MP_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
+sdk = mercadopago.SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# ===================================
+# SISTEMA DE MIGRAÇÃO AUTOMÁTICA
+# ===================================
+
+def verificar_e_migrar_banco():
+    try:
+        if not os.path.exists(DATABASE_PATH):
+            print("⚠️ Banco de dados não encontrado. Criando novo...")
+            with app.app_context():
+                db.create_all()
+            print("✅ Banco criado com sucesso!")
+            return
         
-        <a href="/login" class="link">
-            Já tem conta? <strong>Fazer Login</strong>
-        </a>
-    </div>
-</div>
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # 1. Verifica tabela User
+        cursor.execute("PRAGMA table_info(user)")
+        colunas_existentes = [col[1] for col in cursor.fetchall()]
+        colunas_necessarias = [
+            'id', 'email', 'dj_name', 'password_hash',
+            'credits', 'is_subscriber', 'subscription_expires',
+            'referral_code', 'referred_by', 'created_at', 'updated_at'
+        ]
+        
+        colunas_faltando = [col for col in colunas_necessarias if col not in colunas_existentes]
+        
+        if colunas_faltando:
+            print(f"🔧 Migrando User: Faltam {colunas_faltando}")
+            for coluna in colunas_faltando:
+                try:
+                    if coluna == 'credits': cursor.execute("ALTER TABLE user ADD COLUMN credits REAL DEFAULT 0.0")
+                    elif coluna == 'is_subscriber': cursor.execute("ALTER TABLE user ADD COLUMN is_subscriber BOOLEAN DEFAULT 0")
+                    elif coluna == 'subscription_expires': cursor.execute("ALTER TABLE user ADD COLUMN subscription_expires DATETIME")
+                    elif coluna == 'referral_code': cursor.execute("ALTER TABLE user ADD COLUMN referral_code VARCHAR(50)")
+                    elif coluna == 'referred_by': cursor.execute("ALTER TABLE user ADD COLUMN referred_by VARCHAR(50)")
+                    elif coluna == 'created_at': cursor.execute("ALTER TABLE user ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP")
+                    elif coluna == 'updated_at': cursor.execute("ALTER TABLE user ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP")
+                except Exception as e: print(f"Erro coluna {coluna}: {e}")
+            conn.commit()
 
-<script>
-// Password Strength Indicator
-const passwordInput = document.getElementById('passwordInput');
-const strengthFill = document.getElementById('strengthFill');
-const strengthText = document.getElementById('strengthText');
+        # 2. Verifica tabela Payment
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='payment'")
+        if not cursor.fetchone():
+            print("⚠️ Tabela 'payment' não existe. Criando via SQLAlchemy...")
+            with app.app_context():
+                db.create_all()
 
-passwordInput.addEventListener('input', (e) => {
-    const password = e.target.value;
-    let strength = 0;
-    
-    if (password.length >= 8) strength += 25;
-    if (password.length >= 12) strength += 25;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
-    if (/\d/.test(password) && /[!@#$%^&*]/.test(password)) strength += 25;
-    
-    strengthFill.style.width = strength + '%';
-    
-    if (strength <= 25) {
-        strengthFill.style.background = '#ff5555';
-        strengthText.textContent = 'Senha fraca';
-        strengthText.style.color = '#ff5555';
-    } else if (strength <= 50) {
-        strengthFill.style.background = '#ffaa00';
-        strengthText.textContent = 'Senha razoável';
-        strengthText.style.color = '#ffaa00';
-    } else if (strength <= 75) {
-        strengthFill.style.background = '#00bfff';
-        strengthText.textContent = 'Senha boa';
-        strengthText.style.color = '#00bfff';
-    } else {
-        strengthFill.style.background = '#00ff7f';
-        strengthText.textContent = 'Senha forte!';
-        strengthText.style.color = '#00ff7f';
-    }
-});
-</script>
+        # 3. Verifica tabela Coupon (NOVO)
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='coupon'")
+        if not cursor.fetchone():
+            print("⚠️ Tabela 'coupon' não existe. Criando via SQLAlchemy...")
+            with app.app_context():
+                db.create_all()
+                
+        conn.close()
+        
+    except Exception as e:
+        print(f"❌ ERRO BANCO: {e}")
 
-</body>
-</html>
+with app.app_context():
+    verificar_e_migrar_banco()
+
+DOWNLOAD_FOLDER = 'downloads'
+STATIC_FOLDER = 'static'
+
+for f in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
+    if not os.path.exists(f): 
+        os.makedirs(f)
+
+FFMPEG_PATH = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
+
+def limpar_pastas():
+    try:
+        for folder in [DOWNLOAD_FOLDER, STATIC_FOLDER]:
+            for filename in os.listdir(folder):
+                if filename == 'images': continue 
+                file_path = os.path.join(folder, filename)
+                if os.path.isfile(file_path): os.unlink(file_path)
+    except Exception as e:
+        print(f"Erro ao limpar pastas: {e}")
+
+def gerar_spek(audio_path, title):
+    try:
+        y, sr = librosa.load(audio_path, duration=60)
+        plt.style.use('dark_background')
+        plt.figure(figsize=(8, 3))
+        D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+        librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='hz', cmap='inferno')
+        plt.colorbar(format='%+2.0f dB')
+        plt.title(f'{title[:40]}...', fontsize=10, color='white')
+        plt.tight_layout()
+        img_name = f"spec_{int(time.time())}_{np.random.randint(100)}.png"
+        img_path = os.path.join(STATIC_FOLDER, img_name)
+        plt.savefig(img_path, facecolor='#1e1e1e', edgecolor='none')
+        plt.close()
+        return img_name
+    except Exception as e:
+        print(f"Erro spek: {e}")
+        return None
+
+def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=None):
+    try:
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext == '.mp3':
+            audio = MP3(file_path, ID3=ID3)
+            try: audio.delete()
+            except: pass
+            audio.add_tags()
+            if title: audio.tags.add(TIT2(encoding=3, text=title))
+            if artist: audio.tags.add(TPE1(encoding=3, text=artist))
+            if album: audio.tags.add(TALB(encoding=3, text=album))
+            if cover_url:
+                try:
+                    resp = requests.get(cover_url, timeout=10)
+                    if resp.status_code == 200:
+                        img = Image.open(BytesIO(resp.content)).resize((500, 500))
+                        img_bytes = BytesIO()
+                        img.save(img_bytes, format='JPEG')
+                        audio.tags.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=img_bytes.getvalue()))
+                except: pass
+            audio.save()
+        return True
+    except Exception as e:
+        print(f"Erro metadados: {e}")
+        return False
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
+
+# ===================================
+# AUTENTICAÇÃO E CADASTRO
+# ===================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        user = User.query.filter_by(email=email).first()
+        
+        if not user or not check_password_hash(user.password_hash, password):
+            flash('Login incorreto.', 'error')
+            return render_template('login.html')
+        
+        login_user(user)
+        
+        # Se tem cupom ativo ou pagou
+        if user.is_subscriber and user.subscription_expires:
+            if user.subscription_expires < datetime.utcnow():
+                user.is_subscriber = False
+                db.session.commit()
+                flash('Sua assinatura expirou.', 'error')
+                return redirect(url_for('payment'))
+
+        if not user.is_subscriber:
+            return redirect(url_for('payment'))
+        
+        return redirect(url_for('index'))
+            
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        dj_name = request.form.get('dj_name', '').strip()
+        password = request.form.get('password', '')
+        coupon_code = request.form.get('coupon_code', '').strip().upper() # Pega o cupom
+        
+        if User.query.filter_by(email=email).first():
+            flash('E-mail já cadastrado.', 'error')
+            return render_template('register.html')
+        
+        try:
+            new_user = User(email=email, dj_name=dj_name)
+            new_user.set_password(password)
+            new_user.generate_referral()
+            
+            # LÓGICA DO CUPOM
+            cupom_valido = False
+            if coupon_code:
+                coupon = Coupon.query.filter_by(code=coupon_code, active=True).first()
+                if coupon:
+                    new_user.is_subscriber = True
+                    new_user.subscription_expires = datetime.utcnow() + timedelta(days=coupon.days)
+                    cupom_valido = True
+                else:
+                    flash('Cupom inválido. Conta criada, mas sem acesso VIP.', 'error')
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            login_user(new_user)
+            
+            if cupom_valido:
+                flash(f'Bem-vindo! Cupom {coupon_code} aplicado com sucesso.', 'success')
+                return redirect(url_for('index'))
+            else:
+                return redirect(url_for('payment'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro no cadastro.', 'error')
+            return render_template('register.html')
+            
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+# ===================================
+# ROTA SECRETA PARA CRIAR CUPOM
+# ===================================
+@app.route('/setup-coupons')
+def setup_coupons():
+    """Cria o cupom VIBE30 se não existir"""
+    try:
+        if not Coupon.query.filter_by(code='VIBE30').first():
+            c1 = Coupon(code='VIBE30', days=30, active=True)
+            db.session.add(c1)
+            db.session.commit()
+            return "✅ Cupom VIBE30 (30 dias) criado com sucesso!"
+        return "⚠️ Cupom VIBE30 já existe."
+    except Exception as e:
+        return f"Erro: {e}"
+
+# ===================================
+# PAGAMENTO
+# ===================================
+@app.route('/payment')
+@login_required
+def payment():
+    if current_user.is_subscriber: return redirect(url_for('index'))
+    pending_payment = Payment.query.filter_by(user_id=current_user.id, status='pending').first()
+    return render_template('payment.html', user=current_user, pending_payment=pending_payment)
+
+@app.route('/create_pix_payment', methods=['POST'])
+@login_required
+def create_pix_payment():
+    if not sdk: return jsonify({'error': 'Mercado Pago Error'}), 500
+    try:
+        external_ref = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
+        payment_data = {
+            "transaction_amount": 25.00,
+            "description": "VibeDownloader - Mensal",
+            "payment_method_id": "pix",
+            "payer": {"email": current_user.email, "first_name": current_user.dj_name},
+            "external_reference": external_ref,
+            "notification_url": f"{os.getenv('APP_URL')}/webhook/mercadopago"
+        }
+        
+        result = sdk.payment().create(payment_data)
+        pix_data = result["response"]
+        
+        qr_code = pix_data['point_of_interaction']['transaction_data']['qr_code_base64']
+        qr_code_text = pix_data['point_of_interaction']['transaction_data']['qr_code']
+        
+        new_payment = Payment(
+            user_id=current_user.id, payment_id=str(pix_data['id']),
+            external_reference=external_ref, amount=25.00,
+            pix_qr_code=qr_code, pix_code=qr_code_text,
+            expires_at=datetime.utcnow() + timedelta(days=1)
+        )
+        db.session.add(new_payment)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'qr_code': qr_code, 'qr_code_text': qr_code_text, 'external_reference': external_ref})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/webhook/mercadopago', methods=['POST'])
+def webhook():
+    try:
+        data = request.json
+        if data.get('action') == 'payment.created' or data.get('type') == 'payment':
+            pid = data['data']['id']
+            pay_info = sdk.payment().get(pid)['response']
+            ext_ref = pay_info['external_reference']
+            status = pay_info['status']
+            
+            p = Payment.query.filter_by(external_reference=ext_ref).first()
+            if p:
+                p.status = status
+                if status == 'approved':
+                    p.approved_at = datetime.utcnow()
+                    u = User.query.get(p.user_id)
+                    u.is_subscriber = True
+                    u.subscription_expires = datetime.utcnow() + timedelta(days=30)
+                db.session.commit()
+        return jsonify({'success': True})
+    except: return jsonify({'error': 'fail'}), 500
+
+@app.route('/payment/check/<external_reference>')
+@login_required
+def check_status(external_reference):
+    p = Payment.query.filter_by(external_reference=external_reference, user_id=current_user.id).first()
+    if p and p.status == 'approved':
+        current_user.is_subscriber = True # Força atualização sessão
+        return jsonify({'approved': True})
+    return jsonify({'approved': False})
+
+# ===================================
+# DOWNLOADER E CORE
+# ===================================
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if not current_user.is_authenticated: return render_template('landing.html')
+    if not current_user.is_subscriber: return redirect(url_for('payment'))
+    
+    # Verifica expiração
+    if current_user.subscription_expires and current_user.subscription_expires < datetime.utcnow():
+        current_user.is_subscriber = False
+        db.session.commit()
+        return redirect(url_for('payment'))
+
+    if request.method == 'POST':
+        limpar_pastas()
+        urls = [u.strip() for u in request.form.getlist('urls[]') if u.strip()]
+        format_type = request.form.get('format', 'mp3')
+        if not urls: return redirect(url_for('index'))
+
+        files_info, downloaded = [], []
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+            'noplaylist': True, 'quiet': True, 'ffmpeg_location': FFMPEG_PATH,
+            'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': format_type, 'preferredquality': '320'}],
+        }
+
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                for url in urls:
+                    try:
+                        info = ydl.extract_info(url, download=True)
+                        fname = ydl.prepare_filename(info).rsplit('.', 1)[0] + f'.{format_type}'
+                        if os.path.exists(fname):
+                            spec = gerar_spek(fname, info.get('title', 'Audio'))
+                            files_info.append({'title': info.get('title'), 'artist': info.get('artist'), 'thumbnail': info.get('thumbnail'), 'spectrogram': spec, 'filename': os.path.basename(fname)})
+                            downloaded.append(fname)
+                    except: continue
+            
+            if len(downloaded) == 1:
+                return render_template('index.html', show_metadata_editor=True, file_info=files_info[0], format_type=format_type)
+            elif len(downloaded) > 1:
+                zip_name = f"Vibe_Pack_{int(time.time())}.zip"
+                with zipfile.ZipFile(f"{DOWNLOAD_FOLDER}/{zip_name}", 'w') as zf:
+                    for f in downloaded: zf.write(f, os.path.basename(f))
+                return render_template('index.html', download_ready=True, results=files_info, final_filename=zip_name, is_zip=True)
+        except Exception as e:
+            flash(f'Erro: {e}', 'error')
+
+    return render_template('index.html', download_ready=False)
+
+@app.route('/apply_metadata', methods=['POST'])
+@login_required
+def apply_metadata():
+    fname = request.form.get('filename')
+    path = os.path.join(DOWNLOAD_FOLDER, fname)
+    if os.path.exists(path):
+        editar_metadados(path, request.form.get('artist'), request.form.get('title'), request.form.get('album'), request.form.get('cover_url'))
+        return jsonify({'success': True, 'download_url': url_for('download_file', filename=fname)})
+    return jsonify({'error': 'Arquivo sumiu'}), 404
+
+@app.route('/download/<path:filename>')
+@login_required
+def download_file(filename):
+    return send_file(os.path.join(DOWNLOAD_FOLDER, filename), as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5002)
