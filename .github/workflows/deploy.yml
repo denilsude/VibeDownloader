@@ -11,31 +11,27 @@ jobs:
     - name: Baixar Código
       uses: actions/checkout@v4
 
-    - name: Instalar Dependências do Sistema (Compiladores e Imagem)
+    - name: Instalar Dependências do Linux (Imagens e Compiladores)
       run: |
-        # Atualiza pacotes e instala compiladores e libs de imagem (JPEG/PNG/ZLIB)
         sudo apt-get update
+        # Instala bibliotecas necessárias para compilar o Pillow no Python 3.13
         sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
         sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev liblcms2-dev
 
-    - name: Criar Arquivo .env (Segredos)
+    - name: Criar Arquivo .env
       run: |
-        # Cria o arquivo de configuração com as chaves do GitHub
         echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" > /root/VibeDownloader/.env
         echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> /root/VibeDownloader/.env
         echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> /root/VibeDownloader/.env
         echo "APP_URL=${{ secrets.APP_URL }}" >> /root/VibeDownloader/.env
         echo "DATABASE_URI=sqlite:///vibe.db" >> /root/VibeDownloader/.env
         echo "FLASK_ENV=production" >> /root/VibeDownloader/.env
-        
-        # Garante permissões de segurança
         chmod 600 /root/VibeDownloader/.env
 
-    - name: Atualizar Aplicação Python
+    - name: Atualizar Python e Bibliotecas
       run: |
         PROJECT_DIR="/root/VibeDownloader"
         
-        # Cria diretório se não existir
         if [ ! -d "$PROJECT_DIR" ]; then 
             git clone https://github.com/denilsude/VibeDownloader.git "$PROJECT_DIR"
         fi
@@ -44,21 +40,18 @@ jobs:
         git fetch --all
         git reset --hard origin/main
         
-        # Configura Ambiente Virtual
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
         
-        # Atualiza ferramentas de build
+        # ATUALIZAÇÃO CRÍTICA PARA PYTHON 3.13
         ./venv/bin/pip install --upgrade pip setuptools wheel
         
-        # Instala dependências Python (ignorando cache para forçar recompilação se necessário)
-        ./venv/bin/pip install -r requirements.txt --no-cache-dir
+        # Tenta instalar preferindo binários, se falhar, compila
+        ./venv/bin/pip install -r requirements.txt --prefer-binary
 
     - name: Reiniciar Serviço
       run: |
-        # Atualiza e reinicia o serviço systemd
         sudo cp /root/VibeDownloader/vibe.service /etc/systemd/system/vibe.service
         sudo systemctl daemon-reload
         sudo systemctl enable vibe
         sudo systemctl restart vibe
-        # Verifica status
         sudo systemctl status vibe --no-pager
