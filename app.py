@@ -9,8 +9,16 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import numpy as np
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory, jsonify
 from yt_dlp import YoutubeDL
+from mutagen.easyid3 import EasyID3
+from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
+from mutagen.mp3 import MP3
+from mutagen.flac import FLAC
+from mutagen.wave import WAVE
+import requests
+from io import BytesIO
+from PIL import Image
 
 # Banco e Login
 from models import db, User
@@ -80,6 +88,104 @@ def gerar_spek(audio_path, title):
         print(f"Erro ao gerar espectrograma: {e}")
         return None
 
+def editar_metadados(file_path, artist=None, title=None, album=None, cover_url=None):
+    """Edita metadados ID3 do arquivo de áudio"""
+    try:
+        ext = os.path.splitext(file_path)[1].lower()
+        
+        # MP3
+        if ext == '.mp3':
+            audio = MP3(file_path, ID3=ID3)
+            
+            # Remove tags antigas
+            try:
+                audio.delete()
+            except:
+                pass
+            
+            audio.add_tags()
+            
+            if title:
+                audio.tags.add(TIT2(encoding=3, text=title))
+            if artist:
+                audio.tags.add(TPE1(encoding=3, text=artist))
+            if album:
+                audio.tags.add(TALB(encoding=3, text=album))
+            
+            # Adiciona capa
+            if cover_url:
+                try:
+                    response = requests.get(cover_url, timeout=10)
+                    if response.status_code == 200:
+                        # Redimensiona imagem para 500x500 (otimização)
+                        img = Image.open(BytesIO(response.content))
+                        img = img.resize((500, 500), Image.Resampling.LANCZOS)
+                        img_bytes = BytesIO()
+                        img.save(img_bytes, format='JPEG')
+                        img_bytes.seek(0)
+                        
+                        audio.tags.add(
+                            APIC(
+                                encoding=3,
+                                mime='image/jpeg',
+                                type=3,  # Cover (front)
+                                desc='Cover',
+                                data=img_bytes.read()
+                            )
+                        )
+                except Exception as e:
+                    print(f"Erro ao adicionar capa: {e}")
+            
+            audio.save()
+        
+        # FLAC
+        elif ext == '.flac':
+            audio = FLAC(file_path)
+            if title:
+                audio['title'] = title
+            if artist:
+                audio['artist'] = artist
+            if album:
+                audio['album'] = album
+            
+            # Adiciona capa FLAC
+            if cover_url:
+                try:
+                    response = requests.get(cover_url, timeout=10)
+                    if response.status_code == 200:
+                        img = Image.open(BytesIO(response.content))
+                        img = img.resize((500, 500), Image.Resampling.LANCZOS)
+                        img_bytes = BytesIO()
+                        img.save(img_bytes, format='JPEG')
+                        
+                        picture = mutagen.flac.Picture()
+                        picture.type = 3  # Cover (front)
+                        picture.mime = 'image/jpeg'
+                        picture.data = img_bytes.getvalue()
+                        audio.add_picture(picture)
+                except Exception as e:
+                    print(f"Erro ao adicionar capa FLAC: {e}")
+            
+            audio.save()
+        
+        # WAV (limitado - usa ID3v2)
+        elif ext == '.wav':
+            try:
+                audio = WAVE(file_path)
+                audio.add_tags()
+                if title:
+                    audio['TIT2'] = TIT2(encoding=3, text=title)
+                if artist:
+                    audio['TPE1'] = TPE1(encoding=3, text=artist)
+                audio.save()
+            except:
+                pass  # WAV tem suporte limitado a tags
+        
+        return True
+    except Exception as e:
+        print(f"Erro ao editar metadados: {e}")
+        return False
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(
@@ -88,7 +194,7 @@ def favicon():
     )
 
 # ===================================
-# AUTENTICAÇÃO - REFATORADA
+# AUTENTICAÇÃO
 # ===================================
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -100,10 +206,8 @@ def login():
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         
-        # Busca usuário
         user = User.query.filter_by(email=email).first()
         
-        # FEEDBACK CONTEXTUAL
         if not user:
             flash('E-mail não encontrado. Deseja criar uma conta?', 'error')
             return render_template('login.html')
@@ -112,10 +216,8 @@ def login():
             flash('Senha incorreta. Tente novamente.', 'error')
             return render_template('login.html')
         
-        # Login bem-sucedido
         login_user(user)
         
-        # Redireciona baseado no status de assinatura
         if not user.is_subscriber:
             flash('Complete o pagamento para liberar o acesso!', 'error')
             return redirect(url_for('payment'))
@@ -135,7 +237,6 @@ def register():
         dj_name = request.form.get('dj_name', '').strip()
         password = request.form.get('password', '')
         
-        # Validações
         if not email or not dj_name or not password:
             flash('Preencha todos os campos!', 'error')
             return render_template('register.html')
@@ -144,13 +245,11 @@ def register():
             flash('A senha deve ter pelo menos 8 caracteres.', 'error')
             return render_template('register.html')
         
-        # Verifica se email já existe
         user_exists = User.query.filter_by(email=email).first()
         if user_exists:
             flash('Este e-mail já está cadastrado. Faça login!', 'error')
             return render_template('register.html')
         
-        # Cria novo usuário
         try:
             new_user = User(email=email, dj_name=dj_name)
             new_user.set_password(password)
@@ -158,7 +257,6 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             
-            # Loga automaticamente
             login_user(new_user)
             flash('Conta criada com sucesso! Complete o pagamento.', 'success')
             return redirect(url_for('payment'))
@@ -173,7 +271,6 @@ def register():
 @app.route('/payment')
 @login_required
 def payment():
-    """Tela de pagamento PIX"""
     if current_user.is_subscriber:
         return redirect(url_for('index'))
     return render_template('payment.html', user=current_user)
@@ -186,20 +283,17 @@ def logout():
     return redirect(url_for('login'))
 
 # ===================================
-# ÁREA VIP - DOWNLOADER
+# DOWNLOADER + EDITOR DE METADADOS
 # ===================================
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # 1. Se não logado, mostra landing
     if not current_user.is_authenticated:
         return render_template('landing.html')
 
-    # 2. Se não é assinante, redireciona para pagamento
     if not current_user.is_subscriber:
         return redirect(url_for('payment'))
 
-    # 3. Lógica do Downloader
     if request.method == 'POST':
         limpar_pastas()
         raw_urls = request.form.getlist('urls[]')
@@ -235,10 +329,17 @@ def index():
                         
                         if os.path.exists(filename):
                             title = info.get('title', 'Audio')
+                            artist = info.get('artist') or info.get('uploader', 'Desconhecido')
+                            thumbnail = info.get('thumbnail')
+                            
                             spec = gerar_spek(filename, title)
+                            
                             files_info.append({
-                                'title': title, 
-                                'spectrogram': spec
+                                'title': title,
+                                'artist': artist,
+                                'thumbnail': thumbnail,
+                                'spectrogram': spec,
+                                'filename': os.path.basename(filename)
                             })
                             downloaded_paths.append(filename)
                     except Exception as e:
@@ -249,13 +350,14 @@ def index():
                 flash('Não foi possível baixar nenhum arquivo. Verifique os links.', 'error')
                 return redirect(url_for('index'))
 
-            # Gera arquivo final (único ou ZIP)
-            final_filename = ""
-            is_zip = False
-
+            # Se apenas 1 arquivo, vai para edição de metadados
             if len(downloaded_paths) == 1:
-                final_filename = os.path.basename(downloaded_paths[0])
-                is_zip = False
+                return render_template('index.html',
+                                       show_metadata_editor=True,
+                                       file_info=files_info[0],
+                                       format_type=format_type)
+            
+            # Se múltiplos, cria ZIP direto
             else:
                 data_hora = datetime.now().strftime("%d-%m-%Hh%M")
                 zip_name = f"Vibe_Mix_{data_hora}.zip"
@@ -265,15 +367,12 @@ def index():
                     for f in downloaded_paths:
                         zf.write(f, os.path.basename(f))
                 
-                final_filename = zip_name
-                is_zip = True
-
-            return render_template('index.html', 
-                                   download_ready=True, 
-                                   results=files_info, 
-                                   final_filename=final_filename,
-                                   is_zip=is_zip,
-                                   total_files=len(downloaded_paths))
+                return render_template('index.html', 
+                                       download_ready=True, 
+                                       results=files_info, 
+                                       final_filename=zip_name,
+                                       is_zip=True,
+                                       total_files=len(downloaded_paths))
 
         except Exception as e:
             flash(f'Erro no processamento: {str(e)}', 'error')
@@ -282,10 +381,43 @@ def index():
 
     return render_template('index.html', download_ready=False)
 
+@app.route('/apply_metadata', methods=['POST'])
+@login_required
+def apply_metadata():
+    """Aplica metadados editados e finaliza download"""
+    if not current_user.is_subscriber:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        filename = request.form.get('filename')
+        artist = request.form.get('artist', '').strip()
+        title = request.form.get('title', '').strip()
+        album = request.form.get('album', '').strip()
+        cover_url = request.form.get('cover_url', '').strip()
+        
+        file_path = os.path.join(DOWNLOAD_FOLDER, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+        
+        # Aplica metadados
+        success = editar_metadados(file_path, artist, title, album, cover_url)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'download_url': url_for('download_file', filename=filename)
+            })
+        else:
+            return jsonify({'error': 'Erro ao editar metadados'}), 500
+            
+    except Exception as e:
+        print(f"Erro ao aplicar metadados: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/download/<path:filename>')
 @login_required
 def download_file(filename):
-    """Download do arquivo processado"""
     if not current_user.is_subscriber: 
         return redirect(url_for('payment'))
     

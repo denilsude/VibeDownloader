@@ -12,10 +12,9 @@
 <meta name="theme-color" content="#00ff7f">
 
 <style>
-    /* === RESET & GLOBAL === */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body, html { 
-        margin: 0; 
-        padding: 0; 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background-color: #050505; 
         color: #e0e0e0; 
@@ -35,7 +34,6 @@
         width: 100%;
     }
     
-    /* === TOP BAR === */
     .top-bar {
         width: 100%;
         max-width: 600px;
@@ -81,11 +79,8 @@
         transition: color 0.2s;
     }
     
-    .btn-logout:hover { 
-        color: #ff8888; 
-    }
+    .btn-logout:hover { color: #ff8888; }
 
-    /* === PROMO CARD === */
     .promo-card {
         background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 255, 127, 0.1));
         border: 1px solid rgba(0, 191, 255, 0.3);
@@ -108,11 +103,7 @@
         gap: 8px;
     }
     
-    .promo-text { 
-        color: #aaa; 
-        font-size: 0.9em; 
-        line-height: 1.5;
-    }
+    .promo-text { color: #aaa; font-size: 0.9em; line-height: 1.5; }
     
     .promo-code {
         display: inline-block;
@@ -125,7 +116,6 @@
         margin: 0 4px;
     }
 
-    /* === MAIN BOX === */
     .studio-box { 
         background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
         padding: 40px 35px;
@@ -148,7 +138,6 @@
         border-radius: 24px 24px 0 0;
     }
 
-    /* === LOGO & TITLE === */
     .logo-section {
         text-align: center;
         margin-bottom: 30px;
@@ -181,7 +170,6 @@
         letter-spacing: 2px;
     }
 
-    /* === FLASH MESSAGES === */
     .flash { 
         padding: 15px 20px; 
         margin-bottom: 25px; 
@@ -201,7 +189,6 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* === URL INPUTS === */
     .input-wrapper { 
         display: flex; 
         gap: 10px; 
@@ -228,11 +215,8 @@
         box-shadow: 0 0 0 3px rgba(0, 255, 127, 0.1);
     }
     
-    .url-input::placeholder {
-        color: #555;
-    }
+    .url-input::placeholder { color: #555; }
     
-    /* === ICON BUTTONS === */
     .btn-icon { 
         width: 48px; 
         height: 48px;
@@ -271,7 +255,6 @@
         color: #fff;
     }
 
-    /* === FORMAT SELECTOR === */
     .format-selector { 
         margin: 30px 0;
         display: flex;
@@ -280,14 +263,8 @@
         flex-wrap: wrap;
     }
     
-    .format-option { 
-        cursor: pointer;
-        position: relative;
-    }
-    
-    .format-option input { 
-        display: none;
-    }
+    .format-option { cursor: pointer; position: relative; }
+    .format-option input { display: none; }
     
     .format-option span { 
         padding: 12px 28px;
@@ -309,7 +286,6 @@
         transform: scale(1.05);
     }
 
-    /* === ACTION BUTTONS === */
     .btn-action { 
         width: 100%;
         padding: 18px;
@@ -364,7 +340,6 @@
         border-color: #555;
     }
 
-    /* === LOADING OVERLAY === */
     #loading-overlay { 
         display: none;
         position: fixed;
@@ -395,18 +370,9 @@
     }
     
     @keyframes pulse-ring { 
-        0% { 
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7);
-        }
-        70% { 
-            transform: scale(1);
-            box-shadow: 0 0 0 40px rgba(0, 255, 127, 0);
-        }
-        100% { 
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(0, 255, 127, 0);
-        }
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 40px rgba(0, 255, 127, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 127, 0); }
     }
     
     .loading-text { 
@@ -423,7 +389,106 @@
         animation: pulse 1.5s ease-in-out infinite;
     }
 
-    /* === RESULTS === */
+    /* METADATA EDITOR */
+    .metadata-editor {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .editor-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .editor-badge {
+        display: inline-block;
+        background: rgba(0, 191, 255, 0.1);
+        border: 1px solid rgba(0, 191, 255, 0.3);
+        color: #00bfff;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    
+    .editor-title {
+        font-size: 1.3em;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+    
+    .editor-subtitle {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .cover-preview {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 25px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cover-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .cover-placeholder {
+        font-size: 3em;
+        color: #333;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        color: #aaa;
+        font-size: 0.85em;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid #222;
+        border-radius: 12px;
+        color: #fff;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-input:focus {
+        border-color: #00bfff;
+        background: rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
+    }
+    
+    .form-input::placeholder {
+        color: #555;
+    }
+
     .spek-container { 
         margin-top: 25px;
         background: rgba(0, 0, 0, 0.5);
@@ -460,24 +525,11 @@
         margin-bottom: 20px;
     }
 
-    /* === RESPONSIVE === */
     @media (max-width: 768px) {
-        .studio-box {
-            padding: 30px 20px;
-        }
-        
-        .studio-title {
-            font-size: 1.6em;
-        }
-        
-        .format-selector {
-            gap: 8px;
-        }
-        
-        .format-option span {
-            padding: 10px 20px;
-            font-size: 0.85em;
-        }
+        .studio-box { padding: 30px 20px; }
+        .studio-title { font-size: 1.6em; }
+        .format-selector { gap: 8px; }
+        .format-option span { padding: 10px 20px; font-size: 0.85em; }
     }
 </style>
 
@@ -518,11 +570,36 @@
             }
         }, 3000);
     }
+    
+    function applyMetadata() {
+        const form = document.getElementById('metadataForm');
+        const formData = new FormData(form);
+        
+        document.getElementById('loading-overlay').style.display = 'flex';
+        document.getElementById('loading-subtext').textContent = 'Aplicando metadados...';
+        
+        fetch('/apply_metadata', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.download_url;
+            } else {
+                alert('Erro ao aplicar metadados: ' + (data.error || 'Desconhecido'));
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            alert('Erro: ' + error);
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+    }
 </script>
 </head>
 <body>
 
-<!-- LOADING OVERLAY -->
 <div id="loading-overlay">
     <div class="pulse-ring">🎵</div>
     <div class="loading-text">PROCESSANDO</div>
@@ -531,7 +608,6 @@
 
 <div class="container">
     
-    <!-- TOP BAR -->
     <div class="top-bar">
         <div class="user-info">
             <span class="status-dot"></span>
@@ -540,18 +616,14 @@
         <a href="/logout" class="btn-logout">Sair</a>
     </div>
 
-    <!-- PROMO CARD -->
     <div class="promo-card">
-        <div class="promo-title">
-            💎 Programa de Parceiros Ativo
-        </div>
+        <div class="promo-title">💎 Programa de Parceiros Ativo</div>
         <div class="promo-text">
             Seu código: <span class="promo-code">{{ current_user.referral_code }}</span>
             Indique amigos e ganhe créditos na mensalidade!
         </div>
     </div>
 
-    <!-- MAIN STUDIO BOX -->
     <div class="studio-box">
         <div class="logo-section">
             <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-img" alt="Vibe Studio">
@@ -567,7 +639,71 @@
           {% endif %}
         {% endwith %}
 
-        {% if not download_ready %}
+        {% if show_metadata_editor %}
+        <!-- METADATA EDITOR -->
+        <div class="metadata-editor">
+            <div class="editor-header">
+                <div class="editor-badge">✏️ EDITOR DE METADADOS</div>
+                <h2 class="editor-title">Personalizar Informações do Arquivo</h2>
+                <p class="editor-subtitle">Edite antes de baixar para organizar sua biblioteca</p>
+            </div>
+            
+            <div class="cover-preview">
+                {% if file_info.thumbnail %}
+                <img src="{{ file_info.thumbnail }}" alt="Capa" id="coverPreview">
+                {% else %}
+                <div class="cover-placeholder">🎵</div>
+                {% endif %}
+            </div>
+            
+            <form id="metadataForm">
+                <input type="hidden" name="filename" value="{{ file_info.filename }}">
+                <input type="hidden" name="cover_url" value="{{ file_info.thumbnail or '' }}">
+                
+                <div class="form-group">
+                    <label class="form-label">Artista</label>
+                    <input 
+                        type="text" 
+                        name="artist" 
+                        class="form-input" 
+                        value="{{ file_info.artist }}"
+                        placeholder="Nome do artista"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Título</label>
+                    <input 
+                        type="text" 
+                        name="title" 
+                        class="form-input" 
+                        value="{{ file_info.title }}"
+                        placeholder="Nome da música"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Álbum (Opcional)</label>
+                    <input 
+                        type="text" 
+                        name="album" 
+                        class="form-input" 
+                        placeholder="Nome do álbum ou EP"
+                    >
+                </div>
+                
+                <button type="button" class="btn-action btn-download" onclick="applyMetadata()">
+                    💾 APLICAR E BAIXAR
+                </button>
+                
+                <a href="/" class="btn-action btn-restart">
+                    ❌ CANCELAR
+                </a>
+            </form>
+        </div>
+        {% elif not download_ready %}
+        
+        <!-- DOWNLOAD FORM -->
         <div id="form-area">
             <form action="/" method="post" onsubmit="startLoading()" autocomplete="off">
                 <div id="inputs-container">
@@ -608,9 +744,9 @@
                 </button>
             </form>
         </div>
-        {% endif %}
-
-        {% if download_ready %}
+        {% else %}
+        
+        <!-- DOWNLOAD RESULTS -->
         <div>
             <div class="success-badge">
                 ✓ Processamento Concluído
