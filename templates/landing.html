@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeDownloader - A Ferramenta do DJ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #050505; color: #fff; height: 100%; }
+    
+    .hero { 
+        min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        text-align: center; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); 
+        padding: 20px; box-sizing: border-box;
+    }
+    
+    .logo-img { width: 100px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 255, 127, 0.3); margin-bottom: 20px; }
+    
+    h1 { font-size: 3.5em; margin: 0; color: #fff; font-weight: 800; letter-spacing: -2px; }
+    .highlight { color: #00ff7f; text-shadow: 0 0 20px rgba(0, 255, 127, 0.5); }
+    
+    p.subtitle { font-size: 1.2em; color: #888; max-width: 600px; margin: 20px auto 40px; line-height: 1.6; }
+    
+    .btn-group { display: flex; gap: 20px; justify-content: center; margin-bottom: 50px; }
+    
+    .btn { 
+        padding: 15px 40px; border-radius: 50px; font-weight: bold; text-decoration: none; font-size: 1.1em; transition: 0.3s; 
+    }
+    .btn-primary { background: #00ff7f; color: #000; box-shadow: 0 0 20px rgba(0, 255, 127, 0.4); }
+    .btn-primary:hover { transform: scale(1.05); background: #fff; }
+    
+    .btn-outline { border: 2px solid #333; color: #fff; }
+    .btn-outline:hover { border-color: #fff; background: #111; }
+
+    .features { display: flex; gap: 40px; color: #666; font-size: 0.9em; flex-wrap: wrap; justify-content: center; }
+    .feat i { color: #00ff7f; margin-right: 8px; }
+
+    /* Card de Preço/Promoção */
+    .promo-badge {
+        background: rgba(0, 255, 127, 0.1); border: 1px solid #00ff7f; color: #00ff7f;
+        padding: 10px 20px; border-radius: 20px; margin-bottom: 20px; font-size: 0.9em;
+        display: inline-block;
+    }
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-img">
+    
+    <div class="promo-badge">💎 Indique amigos e ganhe créditos na mensalidade</div>
+
+    <h1>Vibe<span class="highlight">Downloader</span></h1>
+    
+    <p class="subtitle">
+        A plataforma definitiva para DJs profissionais. Baixe faixas em 
+        <strong>WAV, FLAC e AIFF</strong> com análise de espectro (Spek) em tempo real. 
+        Qualidade de estúdio, sem compressão.
+    </p>
+    
+    <div class="btn-group">
+        <a href="/login" class="btn btn-outline">Fazer Login</a>
+        <a href="/register" class="btn btn-primary">Começar Agora</a>
+    </div>
+
+    <div class="features">
+        <div class="feat"><i class="fas fa-wave-square"></i> Análise de Espectro</div>
+        <div class="feat"><i class="fas fa-file-audio"></i> WAV Lossless</div>
+        <div class="feat"><i class="fas fa-layer-group"></i> Pack Download</div>
+    </div>
+</div>
+
+</body>
+</html>

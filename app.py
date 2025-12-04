@@ -13,28 +13,28 @@ import numpy as np
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, send_from_directory
 from yt_dlp import YoutubeDL
 
-# Importações do Banco de Dados
+# Importações de Banco e Login
 from models import db, User
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'vibe_secret_key_commercial'
 
-# Configuração do Banco de Dados (SQLite)
+# Config Banco de Dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Inicializa extensões
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login' # Se tentar acessar sem logar, manda pra cá
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Cria o banco de dados se não existir
+# Cria tabelas ao iniciar
 with app.app_context():
     db.create_all()
 
@@ -65,7 +65,6 @@ def gerar_spek(audio_path, title):
         plt.colorbar(format='%+2.0f dB')
         plt.title(f'{title[:40]}...', fontsize=10, color='white')
         plt.tight_layout()
-        
         img_name = f"spec_{int(time.time())}_{np.random.randint(100)}.png"
         img_path = os.path.join(STATIC_FOLDER, img_name)
         plt.savefig(img_path, facecolor='#1e1e1e', edgecolor='none')
@@ -79,21 +78,73 @@ def gerar_spek(audio_path, title):
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
 
+# --- ROTAS DE AUTENTICAÇÃO ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return redirect(url_for('index'))
+        else:
+            flash('Usuário ou senha incorretos.', 'error')
+            
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user_exists = User.query.filter_by(username=username).first()
+        if user_exists:
+            flash('Este nome de usuário já existe.', 'error')
+        else:
+            new_user = User(username=username)
+            new_user.set_password(password)
+            new_user.generate_referral() # Gera código de indicação
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user) # Loga direto após criar
+            return redirect(url_for('index'))
+            
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+# --- ROTA PRINCIPAL (Protegida) ---
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    # SE NÃO ESTIVER LOGADO -> MOSTRA LANDING PAGE
+    if not current_user.is_authenticated:
+        return render_template('landing.html')
+
+    # SE ESTIVER LOGADO -> MOSTRA O DOWNLOADER (Dashboard)
     if request.method == 'POST':
         limpar_pastas()
         
-        # LÓGICA DE FILTRAGEM (Corrige o problema das linhas vazias)
         raw_urls = request.form.getlist('urls[]')
-        # O comando abaixo (if u.strip()) remove qualquer linha que esteja vazia ou só com espaços
         urls = [u for u in raw_urls if u.strip()]
-        
         format_type = request.form.get('format', 'mp3')
 
         if not urls: 
-            # Se a pessoa clicou em converter mas não pôs NENHUM link válido
-            flash('Por favor, adicione pelo menos um link válido.', 'error')
+            flash('Adicione um link válido.', 'error')
             return redirect(url_for('index'))
 
         files_info = []
@@ -129,7 +180,7 @@ def index():
                         continue
             
             if not downloaded_paths:
-                flash('Erro: Nenhum arquivo foi baixado.', 'error')
+                flash('Erro no download.', 'error')
                 return redirect(url_for('index'))
 
             final_filename = ""
@@ -155,12 +206,13 @@ def index():
                                    total_files=len(downloaded_paths))
 
         except Exception as e:
-            flash(f'Erro Crítico: {str(e)}', 'error')
+            flash(f'Erro: {str(e)}', 'error')
             return redirect(url_for('index'))
 
     return render_template('index.html', download_ready=False)
 
 @app.route('/download/<path:filename>')
+@login_required # Protege o download também
 def download_file(filename):
     return send_file(os.path.join(DOWNLOAD_FOLDER, filename), as_attachment=True)
 

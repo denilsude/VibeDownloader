@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Vibe</title>
+<style>
+    body { background: #080808; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .box { background: #151515; padding: 40px; border-radius: 15px; width: 100%; max-width: 380px; text-align: center; border: 1px solid #222; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+    h2 { color: #fff; margin-bottom: 30px; font-weight: 800; }
+    input { width: 100%; padding: 15px; margin-bottom: 15px; background: #222; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; transition: 0.3s; }
+    input:focus { border-color: #00ff7f; background: #1a1a1a; }
+    button { width: 100%; padding: 15px; background: #00ff7f; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; margin-top: 10px; transition: 0.3s; }
+    button:hover { background: #fff; transform: scale(1.02); }
+    .link { margin-top: 25px; display: block; color: #666; text-decoration: none; font-size: 0.9em; }
+    .link:hover { color: #00ff7f; }
+    .flash { background: rgba(255,50,50,0.1); color: #ff8888; border: 1px solid #ff4444; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+    <div class="box">
+        <h2>ACESSAR PAINEL</h2>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Usuário" required>
+            <input type="password" name="password" placeholder="Senha" required>
+            <button type="submit">ENTRAR</button>
+        </form>
+        
+        <a href="/register" class="link">Não tem conta? <strong>Criar agora</strong></a>
+        <a href="/" class="link" style="margin-top: 15px; font-size: 0.8em;">← Voltar ao início</a>
+    </div>
+</body>
+</html>
