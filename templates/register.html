@@ -25,7 +25,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding: 20px;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .grid-bg {
@@ -51,12 +51,12 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
-    max-width: 440px;
+    max-width: 420px;
 }
 
 .box { 
     background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
-    padding: 45px 40px;
+    padding: 40px 30px;
     border-radius: 24px;
     border: 1px solid #222;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -69,269 +69,143 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 2px;
     background: linear-gradient(90deg, #00bfff, #00ff7f);
     border-radius: 24px 24px 0 0;
 }
 
-.logo-mini {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 20px;
-    display: block;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+.header-center {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
 h2 { 
-    color: #00bfff;
-    margin-bottom: 10px;
+    color: #fff;
+    margin-bottom: 5px;
     font-weight: 800;
-    text-align: center;
-    font-size: 1.8em;
-    letter-spacing: -0.5px;
+    font-size: 1.6em;
 }
 
 .subtitle {
-    text-align: center;
     color: #666;
     font-size: 0.9em;
-    margin-bottom: 35px;
 }
 
 .flash { 
-    padding: 15px 18px;
-    margin-bottom: 25px;
-    border-radius: 12px;
-    font-size: 0.95em;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 0.9em;
     display: flex;
     align-items: center;
-    gap: 12px;
-    animation: slideDown 0.3s ease;
+    gap: 10px;
 }
 
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.flash.error { background: rgba(255, 80, 80, 0.1); border: 1px solid rgba(255, 80, 80, 0.2); color: #ff9999; }
+.flash.success { background: rgba(0, 191, 255, 0.1); border: 1px solid rgba(0, 191, 255, 0.2); color: #00bfff; }
 
-.flash.error { 
-    background: rgba(255, 80, 80, 0.1);
-    border: 1px solid rgba(255, 80, 80, 0.3);
-    color: #ff9999;
-}
-
-.flash.success {
-    background: rgba(0, 191, 255, 0.1);
-    border: 1px solid rgba(0, 191, 255, 0.3);
-    color: #00bfff;
-}
-
-form {
-    margin-bottom: 25px;
-}
-
-.input-group {
-    margin-bottom: 18px;
-    position: relative;
-}
+.input-group { margin-bottom: 15px; }
 
 .input-label {
     display: block;
     color: #888;
-    font-size: 0.85em;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.input-icon {
-    position: absolute;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #555;
-    font-size: 1em;
-    pointer-events: none;
+    font-size: 0.8em;
+    margin-bottom: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 input { 
     width: 100%;
-    padding: 16px 18px 16px 45px;
-    background: rgba(0, 0, 0, 0.3);
+    padding: 14px 15px 14px 40px;
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid #333;
     color: #fff;
-    border-radius: 12px;
-    box-sizing: border-box;
+    border-radius: 10px;
     outline: none;
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.3s;
     font-family: inherit;
 }
 
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%; /* Centraliza verticalmente */
+    transform: translateY(-50%); /* Ajuste fino do centro */
+    color: #555;
+    pointer-events: none;
+    margin-top: 14px; /* Compensação para a label acima */
+}
+
+/* Ajuste para input com label */
+.input-wrapper { position: relative; }
+.input-wrapper input { padding-left: 40px; }
+.input-wrapper .input-icon { top: 50%; margin-top: 0; }
+
 input:focus { 
     border-color: #00bfff;
-    background: rgba(0, 0, 0, 0.5);
-    box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.1);
 }
 
-input:focus + .input-icon {
-    color: #00bfff;
-}
+input:focus + .input-icon { color: #00bfff; }
 
-input::placeholder {
-    color: #555;
-}
-
-.password-strength {
-    margin-top: 8px;
-    font-size: 0.8em;
-    color: #666;
-}
-
-.strength-bar {
-    height: 4px;
-    background: #222;
-    border-radius: 2px;
-    margin-top: 6px;
-    overflow: hidden;
-}
-
-.strength-fill {
-    height: 100%;
-    width: 0%;
-    background: #666;
-    transition: all 0.3s;
-}
-
-/* ESTILOS DO CUPOM */
-.coupon-area {
+/* CUPOM ESTILO "TICKET" */
+.coupon-section {
     margin: 25px 0;
-    padding: 20px;
-    border: 1px dashed rgba(0, 255, 127, 0.3);
-    border-radius: 16px;
-    background: rgba(0, 255, 127, 0.05);
-    text-align: center;
     position: relative;
-    transition: all 0.3s ease;
-}
-
-.coupon-area:hover {
-    background: rgba(0, 255, 127, 0.08);
-    border-color: rgba(0, 255, 127, 0.5);
-}
-
-.coupon-label {
-    display: block;
-    color: #00ff7f;
-    font-size: 0.85em;
-    margin-bottom: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.coupon-input-wrapper {
-    position: relative;
-    max-width: 220px;
-    margin: 0 auto;
+    padding: 15px;
+    border: 1px dashed #444;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .coupon-input {
     text-align: center;
     padding: 12px !important;
-    font-family: 'Courier New', monospace;
-    font-weight: 800;
-    letter-spacing: 3px;
     text-transform: uppercase;
-    border: 1px solid #00ff7f !important;
-    color: #00ff7f !important;
-    background: rgba(0, 0, 0, 0.4) !important;
-    box-shadow: 0 0 15px rgba(0, 255, 127, 0.1);
+    font-family: monospace;
+    letter-spacing: 2px;
+    font-weight: bold;
+    border-color: #444;
 }
 
 .coupon-input:focus {
-    box-shadow: 0 0 25px rgba(0, 255, 127, 0.2);
-    transform: scale(1.02);
-}
-
-.coupon-input::placeholder {
-    color: rgba(0, 255, 127, 0.3);
-    letter-spacing: 1px;
+    border-color: #00ff7f;
+    box-shadow: 0 0 15px rgba(0, 255, 127, 0.1);
 }
 
 button { 
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, #00bfff 0%, #0088cc 100%);
+    background: #00ff7f;
     border: none;
     border-radius: 12px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
-    font-size: 1.05em;
-    margin-top: 10px;
-    transition: all 0.3s;
+    font-size: 1rem;
     color: #000;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+    transition: transform 0.2s;
 }
 
-button:hover { 
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 191, 255, 0.4);
-}
+button:hover { transform: translateY(-2px); background: #00e673; }
 
-button:active {
-    transform: translateY(0);
-}
-
-.terms {
-    margin-top: 20px;
-    padding: 15px;
-    background: rgba(0, 191, 255, 0.05);
-    border: 1px solid rgba(0, 191, 255, 0.1);
-    border-radius: 10px;
-    font-size: 0.85em;
-    color: #888;
-    line-height: 1.6;
-}
-
-.terms a {
-    color: #00bfff;
-    text-decoration: none;
-}
-
-.terms a:hover {
-    text-decoration: underline;
-}
-
-.link { 
+.footer-link { 
     display: block;
     text-align: center;
     color: #666;
     text-decoration: none;
-    font-size: 0.95em;
+    font-size: 0.9em;
     margin-top: 20px;
-    transition: color 0.2s;
 }
 
-.link:hover { 
-    color: #00bfff;
-}
-
-.link strong {
-    color: #00bfff;
-    font-weight: 600;
-}
+.footer-link:hover { color: #fff; }
 
 @media (max-width: 480px) {
-    .box {
-        padding: 35px 25px;
-    }
-    
-    h2 {
-        font-size: 1.5em;
-    }
+    .box { padding: 30px 20px; }
 }
 </style>
 </head>
@@ -341,17 +215,16 @@ button:active {
 
 <div class="register-wrapper">
     <div class="box">
-        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-mini" alt="Logo">
-        
-        <h2>Junte-se ao Vibe</h2>
-        <p class="subtitle">Crie sua conta e comece a baixar em qualidade profissional</p>
+        <div class="header-center">
+            <h2>Criar Conta</h2>
+            <p class="subtitle">Acesso profissional imediato</p>
+        </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="flash {{ category }}">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
-                        <span>{{ message }}</span>
+                        {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
@@ -359,132 +232,58 @@ button:active {
 
         <form method="POST" autocomplete="on" id="registerForm">
             <div class="input-group">
-                <label class="input-label">E-mail</label>
-                <div style="position: relative;">
-                    <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="seu@email.com" 
-                        required 
-                        autocomplete="email"
-                        autofocus
-                    >
+                <label class="input-label">Seu Melhor E-mail</label>
+                <div class="input-wrapper">
+                    <input type="email" name="email" placeholder="email@exemplo.com" required>
                     <i class="fas fa-envelope input-icon"></i>
                 </div>
             </div>
             
             <div class="input-group">
-                <label class="input-label">Nome Artístico / DJ Name</label>
-                <div style="position: relative;">
-                    <input 
-                        type="text" 
-                        name="dj_name" 
-                        placeholder="DJ YourName" 
-                        required 
-                        autocomplete="username"
-                    >
-                    <i class="fas fa-user input-icon"></i>
+                <label class="input-label">Nome Artístico / DJ</label>
+                <div class="input-wrapper">
+                    <input type="text" name="dj_name" placeholder="DJ Name" required>
+                    <i class="fas fa-headphones input-icon"></i>
                 </div>
             </div>
             
             <div class="input-group">
-                <label class="input-label">Senha</label>
-                <div style="position: relative;">
-                    <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Mínimo 8 caracteres" 
-                        required 
-                        autocomplete="new-password"
-                        minlength="8"
-                        id="passwordInput"
-                    >
+                <label class="input-label">Senha Segura</label>
+                <div class="input-wrapper">
+                    <input type="password" name="password" placeholder="Mínimo 8 dígitos" required minlength="8">
                     <i class="fas fa-lock input-icon"></i>
-                </div>
-                <div class="password-strength">
-                    <div class="strength-bar">
-                        <div class="strength-fill" id="strengthFill"></div>
-                    </div>
-                    <span id="strengthText">Digite uma senha forte</span>
                 </div>
             </div>
 
-            <div class="coupon-area">
-                <label class="coupon-label">
-                    <i class="fas fa-ticket-alt"></i> Possui Cupom?
+            <div class="coupon-section">
+                <label class="input-label" style="text-align: center; color: #00ff7f;">
+                    <i class="fas fa-ticket-alt"></i> Código de Convite
                 </label>
-                <div class="coupon-input-wrapper">
-                    <input 
-                        type="text" 
-                        name="coupon_code" 
-                        placeholder="CÓDIGO" 
-                        autocomplete="off"
-                        class="coupon-input"
-                    >
-                </div>
-                <p style="font-size: 0.7em; color: #666; margin-top: 8px;">
-                    Use <strong>VIBE30</strong> para 30 dias grátis
-                </p>
+                <input 
+                    type="text" 
+                    name="coupon_code" 
+                    placeholder="DIGITE AQUI" 
+                    class="coupon-input"
+                    autocomplete="off"
+                >
             </div>
             
             <button type="submit">
-                <i class="fas fa-rocket"></i> Criar Conta
+                Finalizar Cadastro
             </button>
         </form>
 
-        <div class="terms">
-            <i class="fas fa-shield-alt"></i>
-            Ao criar uma conta, você concorda com nossos 
-            <a href="#">Termos de Uso</a> e 
-            <a href="#">Política de Privacidade</a>.
-        </div>
-        
-        <a href="/login" class="link">
-            Já tem conta? <strong>Fazer Login</strong>
+        <a href="/login" class="footer-link">
+            Já tem uma conta? <strong style="color: #00ff7f;">Fazer Login</strong>
         </a>
     </div>
 </div>
 
 <script>
-// Limpeza de sessão para evitar loop de redirecionamento
-// Se o usuário acessar a página de registro e tiver sessão, pode causar confusão
+// Limpa sessão ao carregar a página de registro
+// Isso impede loop de redirecionamento se usuário já estiver logado
 window.onload = function() {
-    // Lógica visual da senha
-    const passwordInput = document.getElementById('passwordInput');
-    const strengthFill = document.getElementById('strengthFill');
-    const strengthText = document.getElementById('strengthText');
-
-    if(passwordInput) {
-        passwordInput.addEventListener('input', (e) => {
-            const password = e.target.value;
-            let strength = 0;
-            
-            if (password.length >= 8) strength += 25;
-            if (password.length >= 12) strength += 25;
-            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
-            if (/\d/.test(password) && /[!@#$%^&*]/.test(password)) strength += 25;
-            
-            strengthFill.style.width = strength + '%';
-            
-            if (strength <= 25) {
-                strengthFill.style.background = '#ff5555';
-                strengthText.textContent = 'Senha fraca';
-                strengthText.style.color = '#ff5555';
-            } else if (strength <= 50) {
-                strengthFill.style.background = '#ffaa00';
-                strengthText.textContent = 'Senha razoável';
-                strengthText.style.color = '#ffaa00';
-            } else if (strength <= 75) {
-                strengthFill.style.background = '#00bfff';
-                strengthText.textContent = 'Senha boa';
-                strengthText.style.color = '#00bfff';
-            } else {
-                strengthFill.style.background = '#00ff7f';
-                strengthText.textContent = 'Senha forte!';
-                strengthText.style.color = '#00ff7f';
-            }
-        });
-    }
+    console.log("Register page loaded - session clear check needed by backend");
 };
 </script>
 

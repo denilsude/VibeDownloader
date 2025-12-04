@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VibeDownloader - A Ferramenta Profissional para DJs</title>
 
-<!-- Favicons -->
 <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
 <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
 <meta name="theme-color" content="#00ff7f">
 
-<!-- SEO -->
-<meta name="description" content="Baixe músicas em WAV, FLAC e AIFF com análise de espectro. A ferramenta profissional para DJs que não aceitam qualidade inferior.">
-
-<!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
@@ -29,6 +24,77 @@ body, html {
     scroll-behavior: smooth;
 }
 
+/* === NAVBAR (NOVO) === */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    background: rgba(5, 5, 5, 0.8);
+    backdrop-filter: blur(10px); /* Efeito de vidro fosco */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.nav-logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-link {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.3s;
+    display: none; /* Escondido em mobile por padrão */
+}
+
+@media (min-width: 768px) {
+    .nav-link { display: block; }
+}
+
+.nav-link:hover { color: #fff; }
+
+.btn-login-nav {
+    padding: 10px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.btn-login-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+}
+
 /* === HERO SECTION === */
 .hero { 
     min-height: 100vh; 
@@ -38,12 +104,11 @@ body, html {
     align-items: center; 
     text-align: center; 
     background: radial-gradient(circle at 50% 20%, rgba(0, 255, 127, 0.08) 0%, transparent 50%), #050505;
-    padding: 40px 20px; 
+    padding: 120px 20px 40px; /* Padding top maior por causa da navbar */
     position: relative;
     overflow: hidden;
 }
 
-/* Animated Background Grid */
 .grid-bg {
     position: absolute;
     top: 0;
@@ -63,562 +128,227 @@ body, html {
     100% { transform: translateY(50px); }
 }
 
-/* Logo Premium */
-.logo-container {
-    position: relative;
-    margin-bottom: 20px;
-    z-index: 10;
-}
-
-.logo-img { 
-    width: 100px; 
-    height: 100px;
-    border-radius: 24px; 
-    box-shadow: 
-        0 0 60px rgba(0, 255, 127, 0.4),
-        0 20px 40px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s ease;
-}
-
-.logo-img:hover {
-    transform: scale(1.05) rotate(-2deg);
-}
-
-/* Promo Badge */
 .promo-badge {
     background: linear-gradient(135deg, rgba(0, 255, 127, 0.15), rgba(0, 191, 255, 0.15));
     border: 1px solid rgba(0, 255, 127, 0.3);
     color: #00ff7f;
-    padding: 10px 24px;
+    padding: 8px 20px;
     border-radius: 50px;
     margin-bottom: 30px;
-    font-size: 0.9em;
+    font-size: 0.85em;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 255, 127, 0.2);
-    animation: pulse 3s ease-in-out infinite;
     z-index: 10;
-    position: relative;
 }
 
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 4px 15px rgba(0, 255, 127, 0.2); }
-    50% { box-shadow: 0 4px 25px rgba(0, 255, 127, 0.4); }
-}
-
-.promo-icon {
-    font-size: 1.2em;
-    filter: drop-shadow(0 0 5px rgba(0, 255, 127, 0.6));
-}
-
-/* Hero Title */
 h1 { 
     font-size: clamp(2.5rem, 8vw, 4.5rem);
     margin-bottom: 20px;
     font-weight: 900;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     line-height: 1.1;
     z-index: 10;
     position: relative;
+    max-width: 900px;
 }
 
 .title-normal { color: #fff; }
 .highlight { 
-    color: #00ff7f; 
-    text-shadow: 0 0 30px rgba(0, 255, 127, 0.5);
+    background: linear-gradient(135deg, #00ff7f, #00bfff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     display: inline-block;
 }
 
-/* Subtitle */
 .subtitle { 
-    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-size: clamp(1rem, 3vw, 1.2rem);
     color: #aaa; 
     max-width: 700px; 
     margin: 0 auto 50px; 
-    line-height: 1.8;
+    line-height: 1.6;
     z-index: 10;
     position: relative;
 }
 
-.subtitle strong {
-    color: #fff;
-    font-weight: 600;
-}
+.subtitle strong { color: #fff; font-weight: 600; }
+.pain-point { color: #ff6b6b; font-weight: 600; }
 
-.pain-point {
-    color: #ff6b6b;
-    font-weight: 600;
-}
-
-/* CTA Buttons */
 .cta-group { 
     display: flex; 
-    gap: 20px; 
+    gap: 15px; 
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 60px;
     z-index: 10;
-    position: relative;
+    width: 100%;
 }
 
 .btn { 
-    padding: 18px 40px;
-    border-radius: 60px;
+    padding: 16px 32px;
+    border-radius: 12px;
     font-weight: 700;
     text-decoration: none;
-    font-size: 1.1em;
+    font-size: 1rem;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     cursor: pointer;
     border: none;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    min-width: 200px;
 }
 
 .btn-primary { 
-    background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%);
+    background: #00ff7f;
     color: #000;
-    box-shadow: 
-        0 10px 30px rgba(0, 255, 127, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s;
-}
-
-.btn-primary:hover::before {
-    left: 100%;
+    box-shadow: 0 0 20px rgba(0, 255, 127, 0.3);
 }
 
 .btn-primary:hover { 
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(0, 255, 127, 0.4);
+    transform: translateY(-2px);
+    background: #00e673;
+    box-shadow: 0 0 30px rgba(0, 255, 127, 0.5);
 }
 
 .btn-secondary { 
     background: rgba(255, 255, 255, 0.05);
     color: #fff;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover { 
-    border-color: rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+    border-color: #fff;
 }
 
-/* Social Proof */
-.social-proof {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: #666;
-    font-size: 0.95em;
-    z-index: 10;
-    position: relative;
-}
-
-.avatars {
-    display: flex;
-    margin-left: -10px;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 3px solid #050505;
-    margin-left: -10px;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #00ff7f;
-    font-size: 0.8em;
-}
-
-.proof-text strong {
-    color: #00ff7f;
-}
-
-/* === FEATURES SECTION === */
+/* === FEATURES === */
 .features { 
-    padding: 100px 20px;
-    background: linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+    padding: 80px 20px;
+    background: #0a0a0a;
 }
 
 .section-title {
     text-align: center;
-    font-size: 2.5em;
+    font-size: 2em;
     font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: -1px;
-}
-
-.section-subtitle {
-    text-align: center;
-    color: #666;
-    margin-bottom: 60px;
-    font-size: 1.1em;
+    margin-bottom: 50px;
+    color: #fff;
 }
 
 .features-grid { 
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .feature-card {
-    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
-    padding: 40px 30px;
-    border-radius: 20px;
+    background: #111;
+    padding: 30px;
+    border-radius: 16px;
     border: 1px solid #222;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, #00ff7f, #00bfff);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
-
-.feature-card:hover::before {
-    transform: scaleX(1);
+    transition: transform 0.3s;
 }
 
 .feature-card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-5px);
     border-color: #333;
-    box-shadow: 0 20px 40px rgba(0, 255, 127, 0.1);
 }
 
-.feature-icon {
-    font-size: 3em;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #00ff7f, #00bfff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.feature-title {
-    font-size: 1.4em;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #fff;
-}
-
-.feature-description {
-    color: #888;
-    line-height: 1.6;
-    font-size: 0.95em;
-}
-
-/* === PRICING SECTION === */
-.pricing {
-    padding: 100px 20px;
-    background: #050505;
-}
-
-.pricing-card {
-    max-width: 450px;
-    margin: 0 auto;
-    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
-    padding: 50px 40px;
-    border-radius: 24px;
-    border: 1px solid #222;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.pricing-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00ff7f, #00bfff);
-}
-
-.plan-badge {
-    display: inline-block;
-    background: rgba(0, 255, 127, 0.1);
-    color: #00ff7f;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 0.85em;
-    font-weight: 600;
-    margin-bottom: 20px;
-    border: 1px solid rgba(0, 255, 127, 0.2);
-}
-
-.price {
-    font-size: 4em;
-    font-weight: 900;
-    color: #fff;
-    margin: 20px 0;
-    letter-spacing: -2px;
-}
-
-.price-currency {
-    font-size: 0.4em;
-    color: #666;
-    vertical-align: super;
-}
-
-.price-period {
-    font-size: 0.3em;
-    color: #666;
-}
-
-.price-description {
-    color: #888;
-    margin-bottom: 30px;
-    font-size: 1.05em;
-}
-
-.benefits-list {
-    list-style: none;
-    padding: 0;
-    margin: 40px 0;
-    text-align: left;
-}
-
-.benefits-list li {
-    padding: 12px 0;
-    color: #aaa;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.benefits-list li i {
-    color: #00ff7f;
-    font-size: 1.2em;
-}
+.feature-icon { font-size: 2em; margin-bottom: 15px; }
+.feature-title { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: #fff; }
+.feature-desc { color: #888; font-size: 0.95em; line-height: 1.5; }
 
 /* === FOOTER === */
 .footer {
     padding: 40px 20px;
     text-align: center;
-    color: #333;
-    font-size: 0.85em;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: #444;
+    font-size: 0.8em;
     border-top: 1px solid #111;
 }
 
-.footer-links {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-.footer-links a {
-    color: #666;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.footer-links a:hover {
-    color: #00ff7f;
-}
-
-/* === RESPONSIVE === */
 @media (max-width: 768px) {
+    .navbar { padding: 15px 20px; }
     h1 { font-size: 2.5rem; }
-    .cta-group { flex-direction: column; align-items: center; }
-    .btn { width: 100%; max-width: 300px; justify-content: center; }
-    .social-proof { flex-direction: column; }
-    .features-grid { grid-template-columns: 1fr; }
+    .btn { width: 100%; }
 }
 </style>
 </head>
 <body>
 
-<!-- Grid Background -->
 <div class="grid-bg"></div>
 
-<!-- HERO SECTION -->
-<section class="hero">
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="logo-img" alt="VibeDownloader Logo">
-    </div>
+<nav class="navbar">
+    <a href="/" class="nav-brand">
+        <img src="{{ url_for('static', filename='images/android-chrome-192x192.png') }}" class="nav-logo-img" alt="Vibe">
+        VibeDownloader
+    </a>
     
+    <div class="nav-actions">
+        <a href="#features" class="nav-link">Recursos</a>
+        <a href="/login" class="btn-login-nav">
+            <i class="fas fa-sign-in-alt"></i> Entrar
+        </a>
+    </div>
+</nav>
+
+<section class="hero">
     <div class="promo-badge">
-        <span class="promo-icon">💎</span>
-        <span>Indique 3 amigos e ganhe 1 mês grátis</span>
+        <i class="fas fa-bolt"></i>
+        <span>Novidade: Análise de Espectro em Tempo Real</span>
     </div>
 
     <h1>
-        <span class="title-normal">Vibe</span><span class="highlight">Downloader</span>
+        <span class="title-normal">Baixe em</span> <span class="highlight">Alta Definição</span>
     </h1>
     
     <p class="subtitle">
-        A plataforma profissional para DJs que <strong>não aceitam qualidade inferior</strong>. 
-        Baixe em <strong>WAV, FLAC e AIFF</strong> com análise de espectro em tempo real. 
-        <span class="pain-point">Chega de MP3 ripado</span> — só qualidade de estúdio garantida.
+        A plataforma secreta para DJs que não aceitam qualidade inferior. 
+        Baixe WAV, FLAC e AIFF direto da fonte. 
+        <span class="pain-point">Chega de MP3 ripado de baixa qualidade.</span>
     </p>
     
     <div class="cta-group">
         <a href="/register" class="btn btn-primary">
-            <span>Começar Agora</span>
-            <i class="fas fa-arrow-right"></i>
+            Começar Agora
         </a>
-        <a href="#features" class="btn btn-secondary">
-            <i class="fas fa-play-circle"></i>
-            <span>Ver Recursos</span>
+        <a href="/login" class="btn btn-secondary">
+            <i class="fas fa-user"></i> Já tenho conta
         </a>
-    </div>
-
-    <div class="social-proof">
-        <div class="avatars">
-            <div class="avatar">DJ</div>
-            <div class="avatar">MC</div>
-            <div class="avatar">PR</div>
-            <div class="avatar">+</div>
-        </div>
-        <div class="proof-text">
-            Junte-se a <strong>500+ DJs profissionais</strong>
-        </div>
     </div>
 </section>
 
-<!-- FEATURES SECTION -->
 <section class="features" id="features">
-    <h2 class="section-title">Por que DJs escolhem o Vibe?</h2>
-    <p class="section-subtitle">Ferramentas profissionais que fazem a diferença no set</p>
-    
+    <h2 class="section-title">Tecnologia de Estúdio</h2>
     <div class="features-grid">
         <div class="feature-card">
             <div class="feature-icon">📊</div>
-            <h3 class="feature-title">Análise de Espectro</h3>
-            <p class="feature-description">
-                Visualize a qualidade real do áudio antes de baixar. 
-                Spek integrado garante que você nunca mais toque um arquivo com corte em 16kHz.
-            </p>
+            <h3 class="feature-title">Análise Spek</h3>
+            <p class="feature-desc">Visualize o espectrograma antes de baixar. Garanta que o áudio não tem corte de frequência (shelf).</p>
         </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🎚️</div>
-            <h3 class="feature-title">Formatos Lossless</h3>
-            <p class="feature-description">
-                WAV, FLAC e AIFF em 320kbps reais. 
-                Compatível com Rekordbox, Serato, Traktor e CDJs Pioneer.
-            </p>
-        </div>
-
         <div class="feature-card">
             <div class="feature-icon">⚡</div>
-            <h3 class="feature-title">Download em Lote</h3>
-            <p class="feature-description">
-                Baixe até 10 faixas simultaneamente em um único arquivo ZIP. 
-                Prepare seu set completo em minutos, não em horas.
-            </p>
+            <h3 class="feature-title">Servidores Privados</h3>
+            <p class="feature-desc">Processamento dedicado. Sem filas, sem anúncios, sem rastreadores.</p>
         </div>
-
         <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <h3 class="feature-title">100% Privado</h3>
-            <p class="feature-description">
-                Seus downloads são processados em servidores privados e deletados automaticamente. 
-                Zero logs, zero rastreamento.
-            </p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🎵</div>
-            <h3 class="feature-title">Multi-Plataforma</h3>
-            <p class="feature-description">
-                Suporte para YouTube, SoundCloud, Bandcamp e muito mais. 
-                Um único app para todas as suas fontes.
-            </p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🚀</div>
-            <h3 class="feature-title">Super Rápido</h3>
-            <p class="feature-description">
-                Servidores otimizados para velocidade máxima. 
-                Downloads em WAV processados em menos de 30 segundos.
-            </p>
+            <div class="feature-icon">🎧</div>
+            <h3 class="feature-title">Metadados Prontos</h3>
+            <p class="feature-desc">Arquivos já vêm com capa, artista e álbum corretos para o Rekordbox/Serato.</p>
         </div>
     </div>
 </section>
 
-<!-- PRICING SECTION -->
-<section class="pricing">
-    <h2 class="section-title">Plano Simples, Valor Justo</h2>
-    
-    <div class="pricing-card">
-        <div class="plan-badge">PLANO PRO</div>
-        
-        <div class="price">
-            <span class="price-currency">R$</span>25<span class="price-period">/mês</span>
-        </div>
-        
-        <p class="price-description">
-            Acesso ilimitado a todas as funcionalidades profissionais
-        </p>
-
-        <ul class="benefits-list">
-            <li><i class="fas fa-check-circle"></i> Downloads ilimitados</li>
-            <li><i class="fas fa-check-circle"></i> WAV, FLAC, AIFF e MP3</li>
-            <li><i class="fas fa-check-circle"></i> Análise de espectro em tempo real</li>
-            <li><i class="fas fa-check-circle"></i> Download em lote (ZIP)</li>
-            <li><i class="fas fa-check-circle"></i> Suporte prioritário</li>
-            <li><i class="fas fa-check-circle"></i> Sem anúncios</li>
-            <li><i class="fas fa-check-circle"></i> Cancele quando quiser</li>
-        </ul>
-
-        <a href="/register" class="btn btn-primary" style="width: 100%; justify-content: center;">
-            <span>Assinar Agora com PIX</span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
-
-        <p style="margin-top: 20px; color: #666; font-size: 0.85em;">
-            💳 Pagamento seguro via PIX • Ativação instantânea
-        </p>
-    </div>
-</section>
-
-<!-- FOOTER -->
 <footer class="footer">
-    <div class="footer-links">
-        <a href="#">Termos de Uso</a>
-        <a href="#">Privacidade</a>
-        <a href="#">Suporte</a>
-    </div>
-    <p>© 2024 VibeDownloader. Feito com 💚 para DJs.</p>
+    <p>© 2024 VibeDownloader. Feito para Profissionais.</p>
 </footer>
 
 </body>
