@@ -26,8 +26,7 @@ import sqlite3
 # Carrega variáveis de ambiente
 load_dotenv()
 
-# Banco e Login
-# [MODIFICAÇÃO 1] Adicionado 'Coupon' na importação
+# Importações dos Modelos
 from models import db, User, Payment, Coupon, UsedCoupon
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,7 +35,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'vibe_secret_key_pro_dj_2024_ultra_secure')
 
 # Banco de Dados
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'vibe.db')
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'vibe_v2.db') # Garante uso do V2
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -54,67 +53,43 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # ===================================
-# SISTEMA DE MIGRAÇÃO AUTOMÁTICA
+# SISTEMA DE MIGRAÇÃO AUTOMÁTICA (CORRIGIDO)
 # ===================================
-
 def verificar_e_migrar_banco():
-    """
-    Verifica se o banco tem o schema correto e cria tabela Coupon se faltar.
-    """
+    """Verifica e atualiza tabelas antigas para o novo formato."""
     try:
-        if not os.path.exists(DATABASE_PATH):
-            print("⚠️ Banco de dados não encontrado. Criando novo...")
-            with app.app_context():
-                db.create_all()
-            print("✅ Banco criado com sucesso!")
-            return
-        
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
-        # 1. Verifica tabela User
-        cursor.execute("PRAGMA table_info(user)")
-        colunas_existentes = [col[1] for col in cursor.fetchall()]
-        colunas_necessarias = [
-            'id', 'email', 'dj_name', 'password_hash',
-            'credits', 'is_subscriber', 'subscription_expires',
-            'referral_code', 'referred_by', 'created_at', 'updated_at'
-        ]
-        
-        colunas_faltando = [col for col in colunas_necessarias if col not in colunas_existentes]
-        
-        if colunas_faltando:
-            print(f"🔧 Migrando User: Faltam {colunas_faltando}")
-            for coluna in colunas_faltando:
-                try:
-                    if coluna == 'credits': cursor.execute("ALTER TABLE user ADD COLUMN credits REAL DEFAULT 0.0")
-                    elif coluna == 'is_subscriber': cursor.execute("ALTER TABLE user ADD COLUMN is_subscriber BOOLEAN DEFAULT 0")
-                    elif coluna == 'subscription_expires': cursor.execute("ALTER TABLE user ADD COLUMN subscription_expires DATETIME")
-                    elif coluna == 'referral_code': cursor.execute("ALTER TABLE user ADD COLUMN referral_code VARCHAR(50)")
-                    elif coluna == 'referred_by': cursor.execute("ALTER TABLE user ADD COLUMN referred_by VARCHAR(50)")
-                    elif coluna == 'created_at': cursor.execute("ALTER TABLE user ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP")
-                    elif coluna == 'updated_at': cursor.execute("ALTER TABLE user ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP")
-                except Exception as e: print(f"Erro coluna {coluna}: {e}")
-            conn.commit()
-
-        # 2. Verifica tabela Payment (cria se não existir)
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='payment'")
-        if not cursor.fetchone():
-            print("⚠️ Tabela 'payment' não existe. Criando via SQLAlchemy...")
-            with app.app_context():
-                db.create_all()
-
-        # 3. Verifica tabela Coupon (NOVO - cria se não existir)
+        # 1. Verifica Tabela COUPON (Adiciona colunas novas se faltarem)
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='coupon'")
+        if cursor.fetchone():
+            cursor.execute("PRAGMA table_info(coupon)")
+            colunas = [col[1] for col in cursor.fetchall()]
+            
+            if 'usage_limit' not in colunas:
+                print("🔧 Migrando Coupon: Adicionando usage_limit...")
+                cursor.execute("ALTER TABLE coupon ADD COLUMN usage_limit INTEGER DEFAULT 0")
+            
+            if 'usage_count' not in colunas:
+                print("🔧 Migrando Coupon: Adicionando usage_count...")
+                cursor.execute("ALTER TABLE coupon ADD COLUMN usage_count INTEGER DEFAULT 0")
+        
+        # 2. Cria tabela UsedCoupon se não existir
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='used_coupon'")
         if not cursor.fetchone():
-            print("⚠️ Tabela 'coupon' não existe. Criando via SQLAlchemy...")
-            with app.app_context():
-                db.create_all()
-                
+            print("🔧 Criando tabela UsedCoupon...")
+            # Deixa o SQLAlchemy criar depois
+            
+        conn.commit()
         conn.close()
         
+        # Garante criação de tabelas novas via SQLAlchemy
+        with app.app_context():
+            db.create_all()
+            
     except Exception as e:
-        print(f"❌ ERRO BANCO: {e}")
+        print(f"❌ ERRO MIGRAÇÃO: {e}")
 
 # Executa migração ao iniciar
 with app.app_context():
@@ -189,9 +164,8 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/images'), 'favicon.ico')
 
 # ===================================
-# AUTENTICAÇÃO E CADASTRO
+# AUTENTICAÇÃO
 # ===================================
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -203,12 +177,12 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if not user or not check_password_hash(user.password_hash, password):
-            flash('Login incorreto.', 'error')
+            flash('E-mail ou senha incorretos.', 'error')
             return render_template('login.html')
         
         login_user(user)
         
-        # Se tem cupom ativo ou pagou
+        # Verifica assinatura
         if user.is_subscriber and user.subscription_expires:
             if user.subscription_expires < datetime.utcnow():
                 user.is_subscriber = False
@@ -233,9 +207,6 @@ def register():
         dj_name = request.form.get('dj_name', '').strip()
         password = request.form.get('password', '')
         
-        # [MODIFICAÇÃO 2] Captura o código do cupom
-        coupon_code = request.form.get('coupon_code', '').strip().upper()
-        
         if User.query.filter_by(email=email).first():
             flash('E-mail já cadastrado.', 'error')
             return render_template('register.html')
@@ -244,29 +215,11 @@ def register():
             new_user = User(email=email, dj_name=dj_name)
             new_user.set_password(password)
             new_user.generate_referral()
-            
-            # [MODIFICAÇÃO 3] Lógica de Validação do Cupom
-            cupom_valido = False
-            if coupon_code:
-                coupon = Coupon.query.filter_by(code=coupon_code, active=True).first()
-                if coupon:
-                    new_user.is_subscriber = True
-                    # Soma os dias do cupom à data atual
-                    new_user.subscription_expires = datetime.utcnow() + timedelta(days=coupon.days)
-                    cupom_valido = True
-                else:
-                    flash('Cupom inválido. Conta criada, mas sem acesso VIP.', 'error')
-            
             db.session.add(new_user)
             db.session.commit()
             
             login_user(new_user)
-            
-            if cupom_valido:
-                flash(f'Bem-vindo! Cupom {coupon_code} aplicado com sucesso.', 'success')
-                return redirect(url_for('index'))
-            else:
-                return redirect(url_for('payment'))
+            return redirect(url_for('payment'))
 
         except Exception as e:
             db.session.rollback()
@@ -283,11 +236,14 @@ def logout():
     return redirect(url_for('login'))
 
 # ===================================
-# [MODIFICAÇÃO 4] ROTA SECRETA PARA CRIAR CUPOM
+# SETUP DE CUPONS (ATUALIZADO)
 # ===================================
 @app.route('/setup-coupons')
 def setup_coupons():
     try:
+        # Força migração se necessário
+        verificar_e_migrar_banco()
+        
         msg = ""
         estilo = "background:#111; color:#00ff7f; padding:20px; font-family:sans-serif; text-align:center; border-radius:10px; border:1px solid #333; max-width:400px; margin:50px auto;"
         
@@ -295,18 +251,17 @@ def setup_coupons():
             c1 = Coupon(code='VIBE30', days=30, active=True, usage_limit=0) # 0 = ilimitado
             db.session.add(c1)
             db.session.commit()
-            msg = "✅ Cupom VIBE30 CRIADO com sucesso!"
+            msg = "✅ Cupom VIBE30 CRIADO com sucesso! Tente usar agora."
         else:
-            msg = "⚠️ O Cupom VIBE30 JÁ EXISTE no sistema."
+            msg = "⚠️ O Cupom VIBE30 JÁ EXISTE no sistema e está pronto para uso."
             
-        return f"<div style='{estilo}'><h1>Status do Sistema</h1><p>{msg}</p><a href='/' style='color:#fff'>Voltar</a></div>"
+        return f"<div style='{estilo}'><h1>Status do Sistema</h1><p>{msg}</p><a href='/payment' style='color:#fff'>Ir para Pagamento</a></div>"
     except Exception as e:
-        return f"Erro: {e}"
+        return f"<div style='{estilo} color:red'><h1>Erro no Banco</h1><p>{e}</p></div>"
 
 # ===================================
-# PAGAMENTO
+# PAGAMENTO & CUPONS (ATUALIZADO)
 # ===================================
-
 @app.route('/payment')
 @login_required
 def payment():
@@ -317,27 +272,42 @@ def payment():
 @app.route('/create_pix_payment', methods=['POST'])
 @login_required
 def create_pix_payment():
-    if not sdk: return jsonify({'error': 'Mercado Pago Error'}), 500
+    if not sdk: return jsonify({'error': 'Configuração de pagamento ausente'}), 500
+    
     try:
+        amount_req = request.json.get('amount')
+        amount = float(amount_req) if amount_req else 25.00
+        
         external_ref = f"VIBE-{current_user.id}-{uuid.uuid4().hex[:8].upper()}"
         payment_data = {
-            "transaction_amount": 25.00,
-            "description": "VibeDownloader - Mensal",
+            "transaction_amount": amount,
+            "description": "VibeDownloader - Acesso VIP",
             "payment_method_id": "pix",
-            "payer": {"email": current_user.email, "first_name": current_user.dj_name},
+            "payer": {
+                "email": current_user.email,
+                "first_name": current_user.dj_name.split()[0],
+                "last_name": "User"
+            },
             "external_reference": external_ref,
             "notification_url": f"{os.getenv('APP_URL')}/webhook/mercadopago"
         }
         
+        # Cria preferência
         result = sdk.payment().create(payment_data)
         pix_data = result["response"]
         
+        # TRATAMENTO DE ERRO DO MERCADO PAGO
+        if result["status"] != 201:
+            error_msg = pix_data.get('message', 'Erro desconhecido no Mercado Pago')
+            print(f"Erro MP: {pix_data}")
+            return jsonify({'success': False, 'error': f"Pagamento recusado: {error_msg}"}), 400
+            
         qr_code = pix_data['point_of_interaction']['transaction_data']['qr_code_base64']
         qr_code_text = pix_data['point_of_interaction']['transaction_data']['qr_code']
         
         new_payment = Payment(
             user_id=current_user.id, payment_id=str(pix_data['id']),
-            external_reference=external_ref, amount=25.00,
+            external_reference=external_ref, amount=amount,
             pix_qr_code=qr_code, pix_code=qr_code_text,
             expires_at=datetime.utcnow() + timedelta(days=1)
         )
@@ -346,7 +316,60 @@ def create_pix_payment():
         
         return jsonify({'success': True, 'qr_code': qr_code, 'qr_code_text': qr_code_text, 'external_reference': external_ref})
     except Exception as e:
+        print(f"Erro Python PIX: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/redeem_coupon', methods=['POST'])
+@login_required
+def redeem_coupon():
+    code = request.form.get('code', '').strip().upper()
+    
+    if not code:
+        flash('Digite um código válido.', 'error')
+        return redirect(url_for('payment'))
+        
+    try:
+        coupon = Coupon.query.filter_by(code=code, active=True).first()
+        
+        # 1. Verifica se cupom existe e limites globais
+        if not coupon:
+            flash('Código inválido ou expirado.', 'error')
+            return redirect(url_for('payment'))
+            
+        if coupon.usage_limit > 0 and coupon.usage_count >= coupon.usage_limit:
+            flash('Este cupom atingiu o limite máximo de usos.', 'error')
+            return redirect(url_for('payment'))
+
+        # 2. Verifica se ESSE usuário já usou ESSE cupom
+        ja_usou = UsedCoupon.query.filter_by(user_id=current_user.id, coupon_code=code).first()
+        if ja_usou:
+            flash('Você já resgatou este cupom anteriormente.', 'error')
+            return redirect(url_for('payment'))
+
+        # 3. Aplica o cupom
+        current_user.is_subscriber = True
+        
+        now = datetime.utcnow()
+        if current_user.subscription_expires and current_user.subscription_expires > now:
+            current_user.subscription_expires += timedelta(days=coupon.days)
+        else:
+            current_user.subscription_expires = now + timedelta(days=coupon.days)
+            
+        # 4. Registra o uso
+        coupon.usage_count += 1
+        uso = UsedCoupon(user_id=current_user.id, coupon_code=code)
+        db.session.add(uso)
+        db.session.commit()
+        
+        flash(f'💎 Sucesso! {coupon.days} dias adicionados à sua conta.', 'success')
+        return redirect(url_for('index'))
+            
+    except Exception as e:
+        print(f"Erro ao resgatar: {e}")
+        # Tenta consertar o banco se falhar
+        verificar_e_migrar_banco()
+        flash('Erro no sistema. Tente novamente agora.', 'error')
+        return redirect(url_for('payment'))
 
 @app.route('/webhook/mercadopago', methods=['POST'])
 def webhook():
@@ -375,24 +398,24 @@ def webhook():
 def check_status(external_reference):
     p = Payment.query.filter_by(external_reference=external_reference, user_id=current_user.id).first()
     if p and p.status == 'approved':
-        current_user.is_subscriber = True # Força atualização sessão
+        current_user.is_subscriber = True
         return jsonify({'approved': True})
     return jsonify({'approved': False})
 
 # ===================================
-# DOWNLOADER E CORE
+# CORE DOWNLOADER
 # ===================================
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if not current_user.is_authenticated: return render_template('landing.html')
-    if not current_user.is_subscriber: return redirect(url_for('payment'))
     
     # Verifica expiração
     if current_user.subscription_expires and current_user.subscription_expires < datetime.utcnow():
         current_user.is_subscriber = False
         db.session.commit()
         return redirect(url_for('payment'))
+        
+    if not current_user.is_subscriber: return redirect(url_for('payment'))
 
     if request.method == 'POST':
         limpar_pastas()
@@ -441,65 +464,6 @@ def apply_metadata():
         editar_metadados(path, request.form.get('artist'), request.form.get('title'), request.form.get('album'), request.form.get('cover_url'))
         return jsonify({'success': True, 'download_url': url_for('download_file', filename=fname)})
     return jsonify({'error': 'Arquivo sumiu'}), 404
-# ... (código existente acima)
-
-# ===================================
-# NOVA ROTA: RESGATE DE CUPOM (LOGADO)
-# ===================================
-@app.route('/redeem_coupon', methods=['POST'])
-@login_required
-def redeem_coupon():
-    code = request.form.get('code', '').strip().upper()
-    
-    if not code:
-        flash('Digite um código válido.', 'error')
-        return redirect(url_for('payment'))
-        
-    try:
-        coupon = Coupon.query.filter_by(code=code, active=True).first()
-        
-        # 1. Verifica se cupom existe e limites globais
-        if not coupon:
-            flash('Código inválido ou expirado.', 'error')
-            return redirect(url_for('payment'))
-            
-        if coupon.usage_limit > 0 and coupon.usage_count >= coupon.usage_limit:
-            flash('Este cupom atingiu o limite máximo de usos.', 'error')
-            return redirect(url_for('payment'))
-
-        # 2. Verifica se ESSE usuário já usou ESSE cupom
-        ja_usou = UsedCoupon.query.filter_by(user_id=current_user.id, coupon_code=code).first()
-        if ja_usou:
-            flash('Você já resgatou este cupom anteriormente.', 'error')
-            return redirect(url_for('payment'))
-
-        # 3. Aplica o cupom
-        current_user.is_subscriber = True
-        
-        now = datetime.utcnow()
-        if current_user.subscription_expires and current_user.subscription_expires > now:
-            current_user.subscription_expires += timedelta(days=coupon.days)
-        else:
-            current_user.subscription_expires = now + timedelta(days=coupon.days)
-            
-        # 4. Registra o uso
-        coupon.usage_count += 1
-        uso = UsedCoupon(user_id=current_user.id, coupon_code=code)
-        db.session.add(uso)
-        db.session.commit()
-        
-        flash(f'💎 Sucesso! {coupon.days} dias adicionados à sua conta.', 'success')
-        return redirect(url_for('index'))
-            
-    except Exception as e:
-        print(f"Erro ao resgatar: {e}")
-        flash('Erro ao processar código.', 'error')
-        return redirect(url_for('payment'))
-            
-    except Exception as e:
-        print(f"Erro ao resgatar: {e}")
-        flash('Erro ao processar código.', 'error')
-        return redirect(url_for('payment'))
 
 @app.route('/download/<path:filename>')
 @login_required
@@ -507,4 +471,6 @@ def download_file(filename):
     return send_file(os.path.join(DOWNLOAD_FOLDER, filename), as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Garante migração ao rodar local
+    with app.app_context(): verificar_e_migrar_banco()
+    app.run(debug=True, port=5002)
