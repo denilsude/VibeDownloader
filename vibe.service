@@ -7,7 +7,7 @@ User=root
 WorkingDirectory=/root/VibeDownloader
 Environment="PATH=/root/VibeDownloader/venv/bin"
 # ADICIONADO --timeout 300 PARA NÃO CAIR O DOWNLOAD
-ExecStart=/root/VibeDownloader/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5002 --timeout 300 app:app
+ExecStart=/root/VibeDownloader/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 --timeout 300 app:app
 Restart=always
 
 [Install]
