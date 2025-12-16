@@ -28,7 +28,7 @@ load_dotenv()
 
 # Banco e Login
 # [MODIFICAÇÃO 1] Adicionado 'Coupon' na importação
-from models import db, User, Payment, Coupon
+from models import db, User, Payment, Coupon, UsedCoupon
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -287,17 +287,21 @@ def logout():
 # ===================================
 @app.route('/setup-coupons')
 def setup_coupons():
-    """Rota utilitária para criar o cupom VIBE30"""
     try:
-        # Verifica se já existe para não duplicar
+        msg = ""
+        estilo = "background:#111; color:#00ff7f; padding:20px; font-family:sans-serif; text-align:center; border-radius:10px; border:1px solid #333; max-width:400px; margin:50px auto;"
+        
         if not Coupon.query.filter_by(code='VIBE30').first():
-            c1 = Coupon(code='VIBE30', days=30, active=True)
+            c1 = Coupon(code='VIBE30', days=30, active=True, usage_limit=0) # 0 = ilimitado
             db.session.add(c1)
             db.session.commit()
-            return "✅ Cupom VIBE30 (30 dias) criado com sucesso!"
-        return "⚠️ Cupom VIBE30 já existe."
+            msg = "✅ Cupom VIBE30 CRIADO com sucesso!"
+        else:
+            msg = "⚠️ O Cupom VIBE30 JÁ EXISTE no sistema."
+            
+        return f"<div style='{estilo}'><h1>Status do Sistema</h1><p>{msg}</p><a href='/' style='color:#fff'>Voltar</a></div>"
     except Exception as e:
-        return f"Erro ao criar cupom: {e}"
+        return f"Erro: {e}"
 
 # ===================================
 # PAGAMENTO
@@ -454,24 +458,43 @@ def redeem_coupon():
     try:
         coupon = Coupon.query.filter_by(code=code, active=True).first()
         
-        if coupon:
-            # Aplica o cupom
-            current_user.is_subscriber = True
-            
-            # Se já tiver data futura, soma. Se não, começa de agora.
-            now = datetime.utcnow()
-            if current_user.subscription_expires and current_user.subscription_expires > now:
-                current_user.subscription_expires += timedelta(days=coupon.days)
-            else:
-                current_user.subscription_expires = now + timedelta(days=coupon.days)
-                
-            db.session.commit()
-            
-            flash(f'💎 Sucesso! Cupom ativado. Você ganhou {coupon.days} dias de acesso.', 'success')
-            return redirect(url_for('index'))
-        else:
+        # 1. Verifica se cupom existe e limites globais
+        if not coupon:
             flash('Código inválido ou expirado.', 'error')
             return redirect(url_for('payment'))
+            
+        if coupon.usage_limit > 0 and coupon.usage_count >= coupon.usage_limit:
+            flash('Este cupom atingiu o limite máximo de usos.', 'error')
+            return redirect(url_for('payment'))
+
+        # 2. Verifica se ESSE usuário já usou ESSE cupom
+        ja_usou = UsedCoupon.query.filter_by(user_id=current_user.id, coupon_code=code).first()
+        if ja_usou:
+            flash('Você já resgatou este cupom anteriormente.', 'error')
+            return redirect(url_for('payment'))
+
+        # 3. Aplica o cupom
+        current_user.is_subscriber = True
+        
+        now = datetime.utcnow()
+        if current_user.subscription_expires and current_user.subscription_expires > now:
+            current_user.subscription_expires += timedelta(days=coupon.days)
+        else:
+            current_user.subscription_expires = now + timedelta(days=coupon.days)
+            
+        # 4. Registra o uso
+        coupon.usage_count += 1
+        uso = UsedCoupon(user_id=current_user.id, coupon_code=code)
+        db.session.add(uso)
+        db.session.commit()
+        
+        flash(f'💎 Sucesso! {coupon.days} dias adicionados à sua conta.', 'success')
+        return redirect(url_for('index'))
+            
+    except Exception as e:
+        print(f"Erro ao resgatar: {e}")
+        flash('Erro ao processar código.', 'error')
+        return redirect(url_for('payment'))
             
     except Exception as e:
         print(f"Erro ao resgatar: {e}")

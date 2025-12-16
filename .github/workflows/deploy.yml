@@ -8,53 +8,45 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-    - name: Baixar Código
+    - name: Baixar Código Novo (Checkout)
       uses: actions/checkout@v4
 
-    - name: Instalar Dependências do Linux
+    - name: Executar Atualização no Servidor
       run: |
-        sudo apt-get update
-        # Garante bibliotecas de imagem e compiladores
-        sudo apt-get install -y build-essential python3-dev ffmpeg libsndfile1
-        sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev liblcms2-dev
+        # 1. CRIA BACKUP DO BANCO DE DADOS (SEGURANÇA TOTAL)
+        sudo mkdir -p /root/backups_vibe
+        if [ -f /root/VibeDownloader/vibe_v2.db ]; then
+            sudo cp /root/VibeDownloader/vibe_v2.db /root/backups_vibe/vibe_backup_$(date +%Y%m%d_%H%M%S).db
+            echo "✅ Backup do banco de dados realizado com sucesso."
+        fi
 
-    - name: Configurar Ambiente (.env) - BANCO V2
-      run: |
+        # 2. Configura Variáveis de Ambiente
         echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" > /root/VibeDownloader/.env
         echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> /root/VibeDownloader/.env
         echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> /root/VibeDownloader/.env
         echo "APP_URL=${{ secrets.APP_URL }}" >> /root/VibeDownloader/.env
-        
-        # MUDANÇA CRÍTICA AQUI: Alteramos para vibe_v2.db para forçar a criação de um banco novo
         echo "DATABASE_URI=sqlite:///vibe_v2.db" >> /root/VibeDownloader/.env
         echo "FLASK_ENV=production" >> /root/VibeDownloader/.env
         
-        chmod 600 /root/VibeDownloader/.env
-
-    - name: Atualizar Aplicação Python
-      run: |
+        # 3. Atualiza Código
         PROJECT_DIR="/root/VibeDownloader"
-        
-        if [ ! -d "$PROJECT_DIR" ]; then 
-            git clone https://github.com/denilsude/VibeDownloader.git "$PROJECT_DIR"
-        fi
-        
         cd "$PROJECT_DIR"
+        
+        # Garante permissões
+        sudo chown -R root:root .
+        
+        # Força a atualização do código
         git fetch --all
         git reset --hard origin/main
         
+        # 4. Atualiza Dependências
         if [ ! -d "venv" ]; then python3 -m venv venv; fi
-        
-        # Atualiza pip e ferramentas
-        ./venv/bin/pip install --upgrade pip setuptools wheel
-        
-        # Instala dependências (Versão com Pillow corrigido)
+        ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install -r requirements.txt --prefer-binary
 
-    - name: Reiniciar Serviço
-      run: |
-        sudo cp /root/VibeDownloader/vibe.service /etc/systemd/system/vibe.service
+        # 5. Reinicia o Serviço
+        # Copia o serviço caso tenha mudado
+        sudo cp vibe.service /etc/systemd/system/vibe.service
         sudo systemctl daemon-reload
-        sudo systemctl enable vibe
         sudo systemctl restart vibe
         sudo systemctl status vibe --no-pager
