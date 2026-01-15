@@ -23,8 +23,6 @@ Este projeto integra downloads de múltiplas fontes com **análise espectral em 
   <img src="static/images/android-chrome-512x512.png" alt="VibeDownloader Logo" width="120" />
 </div>
 
-> *Nota: Adicione aqui screenshots da tela de login, dashboard e do espectrograma gerado para enriquecer o portfólio.*
-
 ---
 
 ## 🛠️ Stack Tecnológico & Habilidades Demonstradas
